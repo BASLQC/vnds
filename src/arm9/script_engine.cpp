@@ -14,14 +14,16 @@ using namespace std;
 //------------------------------------------------------------------------------
 
 Variable::Variable(const char* value) {
-    type = VT_int;
+    type = VT_null;
     intval = 0;
     strval[0] = '\0';
 
 	if (value) {
+		type = VT_int;
 		for (const char* c = value; *c != '\0'; c++) {
-			if (!isdigit(*c) || (c != value && *c == '-')) {
-				//value is not of the form /-[0-9]*/
+			if (!isdigit(*c) || (*c == '-' && (c != value || c[1] == '\0'))) {
+				//Block non-digits, block '-' if it's not the first char -or- the only char
+				//In short: value is not of the form /(-)?[0-9]*/
 				type = VT_string;
 				break;
 			}
@@ -39,31 +41,31 @@ Variable::Variable(const char* value) {
 Variable::~Variable() {
 }
 
-bool Variable::operator== (Variable v) const {
-	if (type == VT_int || v.type == VT_int) {
+bool Variable::operator== (const Variable& v) const {
+	if (type == VT_int && v.type == VT_int) {
 		return intval == v.intval;
 	}
 	return strcmp(strval, v.strval) == 0;
 }
-bool Variable::operator!= (Variable v) const {
+bool Variable::operator!= (const Variable& v) const {
 	return !(*this == v);
 }
-bool Variable::operator>  (Variable v) const {
-	if (type == VT_int || v.type == VT_int) {
+bool Variable::operator>  (const Variable& v) const {
+	if (type == VT_int && v.type == VT_int) {
 		return intval > v.intval;
 	}
 	return strcmp(strval, v.strval) > 0;
 }
-bool Variable::operator<  (Variable v) const {
-	if (type == VT_int || v.type == VT_int) {
+bool Variable::operator<  (const Variable& v) const {
+	if (type == VT_int && v.type == VT_int) {
 		return intval < v.intval;
 	}
 	return strcmp(strval, v.strval) < 0;
 }
-bool Variable::operator>= (Variable v) const {
+bool Variable::operator>= (const Variable& v) const {
 	return !(*this < v);
 }
-bool Variable::operator<= (Variable v) const {
+bool Variable::operator<= (const Variable& v) const {
 	return !(*this > v);
 }
 
@@ -170,6 +172,7 @@ void ScriptEngine::QuickRead() {
 
 	//Deactivate sound
 	bool wasMuted = vnds->soundEngine->IsMuted();
+	vnds->soundEngine->StopSound(); //Stop currently playing sound effects
 	vnds->soundEngine->SetMuted(true);
 
 	//Graphics stuff
@@ -193,6 +196,10 @@ void ScriptEngine::QuickRead() {
 		Command command = commands.front();
 		commands.pop_front();
 		fileLine++;
+
+		if ((fileLine & 31) == 0) {
+			vnds->soundEngine->Update();
+		}
 
 		switch (command.id) {
 		case BGLOAD:
@@ -223,8 +230,9 @@ void ScriptEngine::QuickRead() {
 		case FI:
 		case DELAY:
 		case RANDOM:
-        case GOTO:
-        case LABEL:
+		case GOTO:
+		case CLEARTEXT:
+		case LABEL:
 			interpreter->Execute(&command, true);
 			break;
 
@@ -370,6 +378,12 @@ void ScriptEngine::ParseCommand(Command* cmd, char* data) {
     } else if (strcmp(name, "bgload") == 0) {
     	cmd->id = BGLOAD;
     	readStr(cmd->bgload.path, MAXPATHLEN);
+    	int fadeTime;
+    	if (readInt(&fadeTime)) {
+    		cmd->bgload.fadeTime = fadeTime;
+    	} else {
+    		cmd->bgload.fadeTime = -1;
+    	}
     } else if (strcmp(name, "setimg") == 0) {
         cmd->id = SETIMG;
     	readStr(cmd->setimg.path, MAXPATHLEN);
@@ -388,6 +402,8 @@ void ScriptEngine::ParseCommand(Command* cmd, char* data) {
     	cmd->id = TEXT;
         char* text = strtok(NULL, "\n");
         if (text) {
+        	while (isspace(*text)) text++;
+
 			strncpy(cmd->text.text, text, CMD_TEXT_LENGTH-1);
 			cmd->text.text[CMD_TEXT_LENGTH-1] = '\0';
         } else {
@@ -452,6 +468,7 @@ void ScriptEngine::ParseCommand(Command* cmd, char* data) {
     } else if (strcmp(name, "jump") == 0) {
         cmd->id = JUMP;
     	readStr(cmd->jump.path, MAXPATHLEN);
+        readStr(cmd->jump.label, VAR_NAME_LENGTH);
     } else if (strcmp(name, "delay") == 0) {
         cmd->id = DELAY;
         readInt(&cmd->delay.time);
@@ -466,6 +483,9 @@ void ScriptEngine::ParseCommand(Command* cmd, char* data) {
     } else if (strcmp(name, "goto") == 0) {
         cmd->id = GOTO;
         readStr(cmd->lgoto.label, VAR_NAME_LENGTH);
+    } else if (strcmp(name, "cleartext") == 0) {
+        cmd->id = CLEARTEXT;
+        readStr(cmd->cleartext.cleartype, VAR_NAME_LENGTH);
     } else if (strcmp(name, "endscript") == 0) {
         cmd->id = ENDSCRIPT;
     } else if (eof) {
@@ -474,6 +494,26 @@ void ScriptEngine::ParseCommand(Command* cmd, char* data) {
     	cmd->id = SKIP;
 
 		vnLog(EL_error, COM_SCRIPT, "Unknown command: %s", name);
+    }
+}
+
+bool ScriptEngine::JumpToLabel(const char* lbl) {
+	SetScriptFile(vnds->scriptEngine->GetOpenFile());
+
+    Command c;
+    while (true) {
+        c = vnds->scriptEngine->GetCommand(0);
+        if (c.id == LABEL) {
+            if (strcmp(c.label.label, lbl) == 0) {
+                return true;
+            }
+		} else if (c.id == TEXT) {
+			textSkip++;
+        } else if (c.id == END_OF_FILE) {
+            vnLog(EL_error, COM_SCRIPT, "goto cannot find label: '%s'", lbl);
+            return false;
+        }
+        SkipCommands(1);
     }
 }
 

@@ -5,9 +5,12 @@
 #include <map>
 #include <string>
 
+#define CMD_TEXT_LENGTH 		  500
+
 class ScriptInterpreter {
 	private:
 		VNDS* vnds;
+        char rtext[CMD_TEXT_LENGTH*2]; // since all functions use it now
 
 		void cmd_setimg(Command* cmd, bool quickread=false);
 		void cmd_bgload(Command* cmd, bool quickread=false);
@@ -26,6 +29,7 @@ class ScriptInterpreter {
 		void cmd_endscript(Command* cmd, bool quickread=false);
         void cmd_label(Command* cmd, bool quickread=false);
         void cmd_goto(Command* cmd, bool quickread=false);
+        void cmd_cleartext(Command* cmd, bool quickread=false);
 
 		void cmd_eof(Command* cmd, bool quickread=false);
 

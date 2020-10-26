@@ -4,8 +4,9 @@
 #include "../common.h"
 #include "../tcommon/gui/screen.h"
 #include "../tcommon/gui/button.h"
+#include "../tcommon/gui/spinner.h"
 
-class VNMenu : public Screen, public ButtonListener {
+class VNMenu : public Screen, public ButtonListener, public SpinnerListener {
 	private:
 		VNDS* vnds;
 		Button* backButton;
@@ -22,6 +23,7 @@ class VNMenu : public Screen, public ButtonListener {
 		virtual ~VNMenu();
 
 		virtual void OnButtonPressed(Button* button);
+		virtual void OnSpinnerChanged(Spinner* spinner);
 		virtual void Activate();
 
 };

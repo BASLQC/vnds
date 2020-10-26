@@ -120,8 +120,8 @@ void Widget::SetBounds(Rect r) {
 			}
 		}
 
-		vw = mulf32(inttof32(bounds.w), VERTEX_SCALE);
-		vh = mulf32(inttof32(bounds.h), VERTEX_SCALE);
+		vw = VERTEX_SCALE(bounds.w);
+		vh = VERTEX_SCALE(bounds.h);
 
 		backgroundDirty = true;
 	}

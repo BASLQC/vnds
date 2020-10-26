@@ -61,8 +61,8 @@ void AS_SoundVBL() {
     int i;
 
     // adjust master volume
-    if(ipcSound->chan[0].cmd & SNDCMD_SETMASTERVOLUME) {
-        REG_MASTER_VOLUME = SOUND_VOL(ipcSound->volume & 127);
+    if (ipcSound->chan[0].cmd & SNDCMD_SETMASTERVOLUME) {
+    	REG_MASTER_VOLUME = SOUND_VOL(ipcSound->volume & 127);
         ipcSound->chan[0].cmd &= ~SNDCMD_SETMASTERVOLUME;
     }
 
@@ -117,12 +117,12 @@ void AS_SoundVBL() {
     }
 
     // manage mp3
-    if (ipcSound->mp3.cmd & MP3CMD_INIT)
-    {
+    if (ipcSound->mp3.cmd & MP3CMD_INIT) {
         AS_InitMP3();
         ipcSound->mp3.cmd &= ~MP3CMD_INIT;
     }
 
+#ifndef SHRINK_AS_LIB
     if (ipcSound->mp3.cmd & MP3CMD_SETRATE)
     {
         ipcSound->mp3.cmd &= ~MP3CMD_SETRATE;
@@ -145,42 +145,40 @@ void AS_SoundVBL() {
         ipcSound->mp3.state = MP3ST_PAUSED;
 
     }
+#endif
 
 }
 
 // the mp3 decoding engine, must be called on a regular basis (like after VBlank)
 void AS_MP3Engine() {
-	if (!ipcSound) return;
+    if (!ipcSound) return;
 
-	s32 curtimer, numsamples;
+	MP3Player* mp3 = &ipcSound->mp3;
 
     // time-varying mp3 functions are placed oustide the VBL function
-    if (ipcSound->mp3.cmd & MP3CMD_STOP) // <PALIB-CHANGE> placed this outside of the VBL function so that playback cannot be stopped during the decoding takes place
-    {
-        ipcSound->mp3.cmd &= ~MP3CMD_STOP;
+    if (mp3->cmd & MP3CMD_STOP)  {
+        mp3->cmd &= ~MP3CMD_STOP;
         AS_MP3Stop();
     }
-    if (ipcSound->mp3.cmd & MP3CMD_PLAY)
-    {
-        ipcSound->mp3.cmd &= ~MP3CMD_PLAY;
+    if (mp3->cmd & MP3CMD_PLAY) {
+        mp3->cmd &= ~MP3CMD_PLAY;
 
-        if(ipcSound->mp3.state == MP3ST_PAUSED) {
+#ifndef SHRINK_AS_LIB
+        if (mp3->state == MP3ST_PAUSED) {
+            //Restart on a fresh basis
+        	mp3->prevtimer = 0;
+            AS_RegenStreamCallback((s16*)mp3->mixbuffer, mp3->buffersize >> 1);
+            mp3->soundcursor = mp3->buffersize >> 1;
+            AS_SetTimer(mp3->rate);
 
-            // restart on a fresh basis
-            ipcSound->mp3.prevtimer = 0;
-            AS_RegenStreamCallback((s16*)ipcSound->mp3.mixbuffer, ipcSound->mp3.buffersize >> 1);
-            ipcSound->mp3.soundcursor = ipcSound->mp3.buffersize >> 1;
-            AS_SetTimer(ipcSound->mp3.rate);
-
-            ipcSound->mp3.cmd |= MP3CMD_MIX;
-
+            mp3->cmd |= MP3CMD_MIX;
         } else {
-
-            // set variables
-            ipcSound->mp3.prevtimer = 0;
-            ipcSound->mp3.numsamples = 0;
-            readPtr = ipcSound->mp3.mp3buffer;
-            bytesLeft = ipcSound->mp3.mp3filesize;
+#endif
+            //Set variables
+        	mp3->prevtimer = 0;
+        	mp3->numsamples = 0;
+            readPtr = mp3->mp3buffer;
+            bytesLeft = mp3->mp3filesize;
             nAudioBuf = 0;
             nAudioBufStart = 0;
 
@@ -194,67 +192,63 @@ void AS_MP3Engine() {
             stereo = mp3FrameInfo.nChans >> 1;
 
             // fill the half of the buffer
-            AS_RegenStreamCallback((s16*)ipcSound->mp3.mixbuffer, ipcSound->mp3.buffersize >> 1);
-            ipcSound->mp3.soundcursor = ipcSound->mp3.buffersize >> 1;
+            AS_RegenStreamCallback((s16*)mp3->mixbuffer, mp3->buffersize >> 1);
+            mp3->soundcursor = mp3->buffersize >> 1;
 
             // set the mp3 to play at its original sampling rate
             MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
-            ipcSound->mp3.rate = mp3FrameInfo.samprate;
+            mp3->rate = mp3FrameInfo.samprate;
             AS_SetTimer(mp3FrameInfo.samprate);
 
             // start playing
-            ipcSound->mp3.cmd |= MP3CMD_MIX;
+            mp3->cmd |= MP3CMD_MIX;
+#ifndef SHRINK_AS_LIB
         }
-        ipcSound->mp3.state = MP3ST_PLAYING;
-
+#endif
+        mp3->state = MP3ST_PLAYING;
     }
 
     // do the decoding
-    if (ipcSound->mp3.cmd & MP3CMD_MIXING)
-    {
-        curtimer = TIMER1_DATA;
+    if (mp3->cmd & MP3CMD_MIXING) {
+        s32 curtimer = TIMER1_DATA;
 
-        if (ipcSound->mp3.cmd & MP3CMD_WAITING) {
-            ipcSound->mp3.cmd &= ~MP3CMD_WAITING;
+        if (mp3->cmd & MP3CMD_WAITING) {
+        	mp3->cmd &= ~MP3CMD_WAITING;
         } else {
-
-            numsamples = curtimer - ipcSound->mp3.prevtimer;
-
-            if(numsamples < 0)
-                numsamples += 65536;
-
-            ipcSound->mp3.numsamples = numsamples;
+            s32 numsamples = curtimer - mp3->prevtimer;
+            if (numsamples < 0) numsamples += 65536;
+            mp3->numsamples = numsamples;
         }
 
-        ipcSound->mp3.prevtimer = curtimer;
+        mp3->prevtimer = curtimer;
         AS_RegenStream();
 
-        ipcSound->mp3.soundcursor += ipcSound->mp3.numsamples;
-        if (ipcSound->mp3.soundcursor > ipcSound->mp3.buffersize)
-            ipcSound->mp3.soundcursor -= ipcSound->mp3.buffersize;
-    }
-    else if(ipcSound->mp3.cmd & MP3CMD_MIX)
-    {
-        // set up the left channel
-        ipcSound->chan[ipcSound->mp3.channelL].snd.data = (u8*)ipcSound->mp3.mixbuffer;
-        ipcSound->chan[ipcSound->mp3.channelL].snd.size = ipcSound->mp3.buffersize << 1;
-        ipcSound->chan[ipcSound->mp3.channelL].snd.format = AS_PCM_16BIT;
-        ipcSound->chan[ipcSound->mp3.channelL].snd.rate = ipcSound->mp3.rate;
-        ipcSound->chan[ipcSound->mp3.channelL].snd.loop = true;
-        ipcSound->chan[ipcSound->mp3.channelL].snd.delay = 0;
-        ipcSound->chan[ipcSound->mp3.channelL].cmd |= SNDCMD_PLAY;
+        mp3->soundcursor += mp3->numsamples;
+        if (mp3->soundcursor > mp3->buffersize) {
+            mp3->soundcursor -= mp3->buffersize;
+        }
+    } else if (mp3->cmd & MP3CMD_MIX) {
+    	SoundChannel* left = &ipcSound->chan[mp3->channelL];
+    	SoundChannel* right = &ipcSound->chan[mp3->channelR];
+    	SoundInfo* leftSnd = &left->snd;
+    	SoundInfo* rightSnd = &right->snd;
 
-        // set up the right channel
-        ipcSound->chan[ipcSound->mp3.channelR].snd.data = (stereo ? (u8*)ipcSound->mp3.mixbuffer + (ipcSound->mp3.buffersize << 1) : (u8*)ipcSound->mp3.mixbuffer);
-        ipcSound->chan[ipcSound->mp3.channelR].snd.size = ipcSound->mp3.buffersize << 1;
-        ipcSound->chan[ipcSound->mp3.channelR].snd.format = AS_PCM_16BIT;
-        ipcSound->chan[ipcSound->mp3.channelR].snd.rate = ipcSound->mp3.rate;
-        ipcSound->chan[ipcSound->mp3.channelR].snd.loop = true;
-        ipcSound->chan[ipcSound->mp3.channelR].snd.delay = ipcSound->mp3.delay;
-        ipcSound->chan[ipcSound->mp3.channelR].cmd |= SNDCMD_DELAY;
+        leftSnd->data = (u8*)mp3->mixbuffer;
+        rightSnd->data = (stereo ? (u8*)mp3->mixbuffer + (mp3->buffersize << 1) : (u8*)mp3->mixbuffer);
 
-        ipcSound->mp3.cmd &= ~MP3CMD_MIX;
-        ipcSound->mp3.cmd |= MP3CMD_MIXING;
+        leftSnd->size = rightSnd->size = mp3->buffersize << 1;
+        leftSnd->format = rightSnd->format = AS_PCM_16BIT;
+        leftSnd->rate = rightSnd->rate = mp3->rate;
+        leftSnd->loop = rightSnd->loop = true;
+
+        leftSnd->delay = 0;
+        rightSnd->delay = mp3->delay;
+
+        left->cmd |= SNDCMD_PLAY;
+        right->cmd |= SNDCMD_DELAY;
+
+        mp3->cmd &= ~MP3CMD_MIX;
+        mp3->cmd |= MP3CMD_MIXING;
     }
 }
 
@@ -275,7 +269,7 @@ void AS_SetTimer(int freq)
 }
 
 // clear some buffers to avoid clicking on new mp3 start
-inline void AS_MP3ClearBuffers(){
+void AS_MP3ClearBuffers(){
     MP3DecInfo *mp3DecInfo = (MP3DecInfo*)hMP3Decoder;
 	memset(mp3DecInfo->FrameHeaderPS, 0, sizeof(FrameHeader));
 	memset(mp3DecInfo->SideInfoPS, 0, sizeof(SideInfo));
@@ -393,13 +387,10 @@ void AS_RegenStream()
 
     // decode data to the ring buffer
     if((ipcSound->mp3.soundcursor + ipcSound->mp3.numsamples) >= ipcSound->mp3.buffersize) {
-
         AS_RegenStreamCallback((s16*)&ipcSound->mp3.mixbuffer[ipcSound->mp3.soundcursor << 1], ipcSound->mp3.buffersize - ipcSound->mp3.soundcursor);
         remain = ipcSound->mp3.numsamples - (ipcSound->mp3.buffersize - ipcSound->mp3.soundcursor);
         AS_RegenStreamCallback((s16*)ipcSound->mp3.mixbuffer, remain);
-
     } else {
-
         AS_RegenStreamCallback((s16*)&ipcSound->mp3.mixbuffer[ipcSound->mp3.soundcursor << 1], ipcSound->mp3.numsamples);
     }
 }
@@ -416,22 +407,18 @@ void AS_MP3Stop()
     AS_MP3ClearBuffers();
 }
 
-// initialize the mp3 system
-void AS_InitMP3()
-{
-    // init the timers
-    AS_SetTimer(0);
-
-    // init the helix mp3 decoder
+void AS_InitMP3() {
+	AS_SetTimer(0);
     hMP3Decoder = MP3InitDecoder();
 }
 
-// initialize the main system
 void AS_Init(IPC_SoundSystem* ipc) {
-	ipcSound = ipc;
+    ipcSound = ipc;
+	REG_MASTER_VOLUME = SOUND_VOL(127);
+    ipc->chan[0].cmd |= SNDCMD_ARM7READY;
+    //while (ipc->chan[0].cmd & SNDCMD_ARM7READY);
 
-    // tell the arm9 that we are ready
-    ipcSound->chan[0].cmd = SNDCMD_ARM7READY;
+    //ipcSound = ipc;
 }
 
 // desinterleave a stereo source (thanks to Thoduv for the code)

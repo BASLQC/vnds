@@ -1,0 +1,30 @@
+PNGCOMP - PNG COMPARISON
+VERSION 0.1
+
+USAGE: 
+  pngcomp [-vVh] image1.png image2.png
+
+  options: v - verbose, does nothing as yet.
+           V - version, prints version information.
+           h - help, prionts this message.
+
+  inputs: image1.png and image2.png are the two images that are to be compared.
+          it is required that they be the same size.
+
+  This program give some basic statistics about the difference between two images.
+  It was created as a measure of various color quantization methods.
+
+
+NOTES:
+The stats created by this program are purely based on the Euclidean distance 
+in RGBA space between the pixels of the images. Later versions will include 
+different measures such as CIE color space measurements and filters for 
+perception models.
+
+The error calculation used reflects the percieved quality of images only roughly. 
+To determine what image is better nothing can surpass having a look for
+yourself! 
+
+Copyright (c) Stuart Coyle 2004-2006 stuart@cybertherial.com
+
+See LICENCE for details of copyrights held on this program.

@@ -5,26 +5,53 @@
 #include "graphics_engine.h"
 #include "script_engine.h"
 #include "sound_engine.h"
+#include "tcommon/xml_parser.h"
 
 using namespace std;
 
-void loadVars(map<string, Variable>& varMap, XMLNode& node) {
-    int L = node.nChildNode("var");
-    for (int n = 0; n < L; n++) {
-        char type[5];
+bool makeDir(VNDS* vnds) {
+    if (vnds->GetNovelType()) {
+        if (!mkdirs("save")) {
+            vnLog(EL_error, COM_CORE, "Error creating save folder");
+            return false;
+    	}
+        char path[128];
+        snprintf(path, 128, "save/%s", vnds->GetTitle());
+        if (!mkdirs(path)) {
+            vnLog(EL_error, COM_CORE, "Error creating save folder");
+            return false;
+    	}
+    }
+    else {
+        if (!mkdirs("save")) {
+            vnLog(EL_error, COM_CORE, "Error creating save folder");
+            return false;
+    	}
+    }
+    return true;
+}
 
-        XMLNode varE = node.getChildNode("var", n);
-        if (varE.getAttribute("type")) {
-			strncpy(type, varE.getAttribute("type"), 4);
-			type[4] = '\0';
+
+void loadVars(map<string, Variable>& varMap, XmlNode* varsE) {
+    for (u32 n = 0; n < varsE->children.size(); n++) {
+    	if (strcmp(varsE->children[n]->text, "var") != 0) {
+    		continue;
+    	}
+
+        char type[4];
+
+        XmlNode* varE = varsE->children[n];
+        if (varE->GetAttribute("type")) {
+			strncpy(type, varE->GetAttribute("type"), 3);
+			type[3] = '\0';
         } else {
         	type[0] = '\0';
         }
 
         Variable var;
 
-        if (varE.getAttribute("value")) {
-			strncpy(var.strval, varE.getAttribute("value"), VAR_STRING_LENGTH-1);
+        if (varE->GetAttribute("value")) {
+			strncpy(var.strval, varE->GetAttribute("value"), VAR_STRING_LENGTH-1);
 			var.strval[VAR_STRING_LENGTH-1] = '\0';
 			var.intval = atoi(var.strval);
         } else {
@@ -37,11 +64,11 @@ void loadVars(map<string, Variable>& varMap, XMLNode& node) {
         } else if (strcmp(type, "str") == 0) {
             var.type = VT_string;
         } else {
-        	vnLog(EL_warning, COM_CORE, "Unable to load unknown type of variable: \"%s\", type");
+        	vnLog(EL_warning, COM_CORE, "Unable to load unknown type of variable: \"%s\"", type);
         	continue;
         }
 
-        varMap[varE.getAttribute("name")] = var;
+        varMap[varE->GetAttribute("name")] = var;
     }
 }
 void saveVars(FILE* file, map<string, Variable>& varMap, u8 indent) {
@@ -58,6 +85,8 @@ void saveVars(FILE* file, map<string, Variable>& varMap, u8 indent) {
             fprintf(file, "%s<var name=\"%s\" type=\"str\" value=\"%s\" />\n", s, name, var.strval);
         } else if (var.type == VT_int) {
             fprintf(file, "%s<var name=\"%s\" type=\"int\" value=\"%d\" />\n", s, name, var.intval);
+        } else if (var.type == VT_null) {
+        	//Ignore null vars
         } else {
         	vnLog(EL_warning, COM_CORE, "Can't save this unknown type of variable: %d", var.type);
         	continue;
@@ -67,7 +96,10 @@ void saveVars(FILE* file, map<string, Variable>& varMap, u8 indent) {
 
 bool loadState(VNDS* vnds, u16 slot) {
     char path[MAXPATHLEN];
-    sprintf(path, "save/save%.2d.sav", slot);
+    if (vnds->GetNovelType() == NOVELZIP)
+        sprintf(path, "save/%s/save%.2d.sav", vnds->GetTitle(), slot);
+    else 
+        sprintf(path, "save/save%.2d.sav", slot);
     if (!fexists(path)) {
     	vnLog(EL_error, COM_CORE, "Error loading savefile \"%s\". File not found.", path);
         return false;
@@ -76,44 +108,47 @@ bool loadState(VNDS* vnds, u16 slot) {
     vnds->Reset();
 
     //Load XML
-    XMLNode rootE = XMLNode::openFileHelper(path, "save");
+    XmlFile file;
+    XmlNode* rootE = file.Open(path);
 
     //Variables
-    XMLNode variablesE = rootE.getChildNode("variables");
+    XmlNode* variablesE = rootE->GetChild("variables");
     loadVars(vnds->variables, variablesE);
 
     //Script Engine
-    XMLNode scriptE = rootE.getChildNode("script");
-    const char* scriptPath = scriptE.getChildNode("file").getText();
+    XmlNode* scriptE = rootE->GetChild("script");
+    const char* scriptPath = scriptE->GetChild("file")->GetTextContent();
     u32 textSkip = 0;
-    if (scriptE.getChildNode("position").getText()) {
-    	textSkip = atoi(scriptE.getChildNode("position").getText());
+    if (scriptE->GetChild("position")) {
+    	textSkip = MAX(0, atoi(scriptE->GetChild("position")->GetTextContent()));
     }
 
     vnds->scriptEngine->SetScriptFile(scriptPath ? scriptPath : "script/main.scr");
     vnds->scriptEngine->SkipTextCommands(textSkip);
 
-    if (rootE.nChildNode("state") == 0) {
+    XmlNode* stateE = rootE->GetChild("state");
+    if (!stateE) {
     	//Save file doesn't contain state
         return true;
     }
 
-    XMLNode stateE = rootE.getChildNode("state");
-
-    if (stateE.getChildNode("background").getText()) {
-    	vnds->graphicsEngine->SetBackground(stateE.getChildNode("background").getText());
+    if (stateE->GetChild("background")) {
+    	vnds->graphicsEngine->SetBackground(stateE->GetChild("background")->GetTextContent());
     }
 
-    XMLNode spritesE = stateE.getChildNode("sprites");
-    int spritesEChildren = spritesE.nChildNode("sprite");
-    for (int n = 0; n < spritesEChildren; n++) {
+    XmlNode* spritesE = stateE->GetChild("sprites");
+    for (u32 n = 0; n < spritesE->children.size(); n++) {
+    	if (strcmp(spritesE->children[n]->text, "sprite") != 0) {
+    		continue;
+    	}
+
     	int x = 0;
     	int y = 0;
 
-        XMLNode spriteE = spritesE.getChildNode("sprite", n);
-        if (spriteE.getAttribute("x")) x = atoi(spriteE.getAttribute("x"));
-        if (spriteE.getAttribute("y")) y = atoi(spriteE.getAttribute("y"));
-        const char* path = spriteE.getAttribute("path");
+        XmlNode* spriteE = spritesE->children[n];
+        if (spriteE->GetAttribute("x")) x = atoi(spriteE->GetAttribute("x"));
+        if (spriteE->GetAttribute("y")) y = atoi(spriteE->GetAttribute("y"));
+        const char* path = spriteE->GetAttribute("path");
 
         if (path) {
         	vnds->graphicsEngine->SetForeground(path, x, y);
@@ -121,8 +156,8 @@ bool loadState(VNDS* vnds, u16 slot) {
     }
 
     vnds->graphicsEngine->Flush(true);
-    if (stateE.getChildNode("music").getText()) {
-    	vnds->soundEngine->SetMusic(stateE.getChildNode("music").getText());
+    if (stateE->GetChild("music")) {
+    	vnds->soundEngine->SetMusic(stateE->GetChild("music")->GetTextContent());
     }
 
     return true;
@@ -150,7 +185,10 @@ bool saveXml(VNDS* vnds, u16 slot) {
     }
 
     //Open file
-    sprintf(buffer, "save/save%.2d.sav", slot);
+    if (vnds->GetNovelType() == NOVELZIP)
+        sprintf(buffer, "save/%s/save%.2d.sav", vnds->GetTitle(), slot);
+    else 
+        sprintf(buffer, "save/save%.2d.sav", slot);
     FILE* file = fopen(buffer, "wb");
     if (!file) {
 		vnLog(EL_error, COM_CORE, "Error opening file \"%s\" for saving", buffer);
@@ -202,7 +240,10 @@ bool saveXml(VNDS* vnds, u16 slot) {
 
 void saveImage(VNDS* vnds, u16 slot) {
 	char* path = new char[MAXPATHLEN];
-	sprintf(path, "save/save%.2d.img", slot);
+	if (vnds->GetNovelType() == NOVELZIP)
+        sprintf(path, "save/%s/save%.2d.img", vnds->GetTitle(), slot);
+    else 
+        sprintf(path, "save/save%.2d.img", slot);
 	FILE* file = fopen(path, "wb");
 	delete[] path;
 
@@ -212,7 +253,7 @@ void saveImage(VNDS* vnds, u16 slot) {
     }
 
 	u16* rgb = new u16[SAVE_IMG_W * SAVE_IMG_H];
-	u16* screen = vnds->graphicsEngine->buffer;
+	u16* screen = vnds->graphicsEngine->screen;
 
 	int t = 0;
 	for (int y = 0; y < SAVE_IMG_H; y++) {
@@ -247,10 +288,8 @@ void saveImage(VNDS* vnds, u16 slot) {
 }
 
 bool saveState(VNDS* vnds, u16 slot) {
-	if (!mkdirs("save")) {
-		vnLog(EL_error, COM_CORE, "Error creating save folder");
-		return false;
-	}
+	if (!makeDir(vnds))
+        return false;
 
 	if (!saveXml(vnds, slot)) {
 		vnLog(EL_error, COM_CORE, "Save failed");
@@ -262,23 +301,29 @@ bool saveState(VNDS* vnds, u16 slot) {
 }
 
 bool loadGlobal(VNDS* vnds) {
-    const char* path = "save/global.sav";
+    char path[128];
+    if (vnds->GetNovelType() == NOVELZIP)
+        sprintf(path, "save/%s/global.sav", vnds->GetTitle());
+    else 
+        sprintf(path, "save/global.sav");
     if (!fexists(path)) {
     	vnLog(EL_verbose, COM_CORE, "global.sav doesn't exist");
     	return true; //File not found is OK for global.sav
     }
 
-    XMLNode rootE = XMLNode::openFileHelper(path, "global");
-    loadVars(vnds->globals, rootE);
+    XmlFile file;
+    loadVars(vnds->globals, file.Open(path));
     return true;
 }
 bool saveGlobal(VNDS* vnds) {
-    if (!mkdirs("save")) {
-		vnLog(EL_error, COM_CORE, "Error creating save folder");
-		return false;
-	}
+    if (!makeDir(vnds))
+        return false;
 
-    const char* path = "save/global.sav";
+    char path[128];
+    if (vnds->GetNovelType() == NOVELZIP)
+        sprintf(path, "save/%s/global.sav", vnds->GetTitle());
+    else 
+        sprintf(path, "save/global.sav");
     FILE* file = fopen(path, "wb");
     if (!file) {
 		vnLog(EL_error, COM_CORE, "Error opening file \"%s\" for saving", path);

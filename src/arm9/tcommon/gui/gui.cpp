@@ -57,7 +57,7 @@ void GUI::VideoInit() {
     UpdateOAM();
 
     //if (GetActiveScreen()) {
-		consoleInit(NULL, 1, BgType_Text4bpp, BgSize_T_256x256, 7, 0, false, false);
+		consoleInit(NULL, 1, BgType_Text4bpp, BgSize_T_256x256, 7, 0, false, true);
 		videoSetMode(DEFAULT_VIDEO_MODE);
 		videoSetModeSub(MODE_5_2D | DISPLAY_BG1_ACTIVE | DISPLAY_BG3_ACTIVE);
 	    init3D();
@@ -125,19 +125,18 @@ void GUI::PushScreen(Screen* s, GUITransition transition) {
 
 	if (!previousScreenNull) {
 		if (transition == GT_slide) {
+	        swiWaitForVBlank();
 			bgSetPriority(bg2, 3);
-			REG_BG0HOFS = -256;
-			REG_BG3X = (-256) << 8;
 			videoSetMode(oldVideoMode | DISPLAY_BG2_ACTIVE);
 			for (int n = 0; n <= 16; n++) {
-				Draw();
-				swiWaitForVBlank();
-
 				REG_BG0HOFS = -256+(16*n);
 				REG_BG3X = (-256+16*n) << 8;
+
+				Draw();
+				swiWaitForVBlank();
 			}
+			REG_BG0HOFS = 0;
 			REG_BG3X = 0;
-			bgSetScroll(bg3, 0, 0);
 		} else if (fm || fs) {
 			Draw();
 			for (u16 n = 0; n <= frames; n++) {
@@ -195,15 +194,14 @@ void GUI::PopScreen(GUITransition transition) {
 		}
 
 		if (transition == GT_slide) {
-			bgSetPriority(bg2, 0);
-			REG_BG2X = 0;
+			swiWaitForVBlank();
 
+			bgSetPriority(bg2, 0);
 			videoSetMode(DEFAULT_VIDEO_MODE | DISPLAY_BG2_ACTIVE);
 			for (int n = 0; n <= 16; n++) {
+				REG_BG2X = (-16*n) << 8;
 				Draw();
 				swiWaitForVBlank();
-
-				REG_BG2X = (-16*n) << 8;
 			}
 			videoSetMode(DEFAULT_VIDEO_MODE);
 
@@ -250,8 +248,7 @@ void GUI::Draw() {
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-	    glOrthof32(0, mulf32(inttof32(256), VERTEX_SCALE), mulf32(inttof32(192), VERTEX_SCALE),
-	        0, floattof32(0.1), inttof32(100));
+	    glOrthof32(0, VERTEX_SCALE(256), VERTEX_SCALE(192), 0, floattof32(0.1), inttof32(100));
 
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -259,8 +256,8 @@ void GUI::Draw() {
 
 	  	glPolyFmt(DEFAULT_POLY_FMT | POLY_ID(0));
 
-	    MATRIX_SCALE = VERTEX_SCALE;
-		MATRIX_SCALE = VERTEX_SCALE;
+	    MATRIX_SCALE = VERTEX_SCALE_FACTOR;
+		MATRIX_SCALE = VERTEX_SCALE_FACTOR;
 		MATRIX_SCALE = inttof32(1);
 
 	    glViewport(0, 0, 255, 191);

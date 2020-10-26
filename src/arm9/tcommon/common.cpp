@@ -17,17 +17,27 @@
 
 #define LOWC(x)         ((x)&31)
 
-u8 backlight = 1;
+u8 backlight = 0;
 
-void tcommonFIFOCallback(u32 value, void* userdata) {
-	backlight = value;
+void FIFOBacklight(u32 value, void* userdata) {
+    //backlight += 1;
+    //backlight = value;
 }
 
 void toggleBacklight() {
 	//fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT); //--in libnds 1.3.1 you HAVE to check the return value or the command won't be sent (GCC is probably to blame)
-	if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT)) {
+	/*if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT)) {
 		iprintf("Error sending backlight message to ARM7\n");
-	}
+	}*/
+    //fifoSendValue32(FIFO_AUDIO, backlight);
+    //backlight+=1;
+}
+
+u8 chartohex(char c) {
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return 10 + c - 'a';
+	if (c >= 'A' && c <= 'F') return 10 + c - 'A';
+	return 0;
 }
 
 inline s16 blitMinX(s16 sx, s16 dx) {
@@ -213,15 +223,15 @@ void fadeBlack(u16 frames) {
     REG_BLDCNT_SUB = BLEND_FADE_BLACK | BLEND_SRC_BG2 | BLEND_SRC_BG3;
 
     for (u16 n = 0; n <= frames; n++) {
-        REG_BLDY = 0x1F * n / frames;
-        REG_BLDY_SUB = 0x1F * n / frames;
+    	REG_BLDY = 0x1F * n / frames;
+    	REG_BLDY_SUB = 0x1F * n / frames;
         swiWaitForVBlank();
     }
 }
 
 void unfadeBlack2(u16 frames) {
     for (u16 n = 0; n <= frames; n++) {
-        REG_BLDY = 0x1F - 0x1F * n / frames;
+    	REG_BLDY = 0x1F - 0x1F * n / frames;
         REG_BLDY_SUB = 0x1F - 0x1F * n / frames;
         swiWaitForVBlank();
     }
@@ -378,21 +388,28 @@ void trimString(char* string) {
     memmove(string, string+a, b-a);
 	string[b-a] = '\0';
 }
-void unescapeString(char* string) {
-    while (*string != '\0') {
-        if (*string == '\\') {
-            string++;
-            switch (*string) {
-                case '\\': *string = '\\'; break;
-                case 'n':  *string = '\n'; break;
-                case 'r':  *string = '\r'; break;
-                case 't':  *string = '\t'; break;
-                case 'f':  *string = '\f'; break;
+void unescapeString(char* str) {
+	char* s = str;
+    while (*s != '\0') {
+        if (*s == '\\') {
+            s++;
+            switch (*s) {
+                case '\\': *str = '\\'; break;
+                case '\'': *str = '\''; break;
+                case '\"': *str = '\"'; break;
+                case 'n':  *str = '\n'; break;
+                case 'r':  *str = '\r'; break;
+                case 't':  *str = '\t'; break;
+                case 'f':  *str = '\f'; break;
                 default: /*Error*/ break;
             }
+        } else {
+        	*str = *s;
         }
-        string++;
+        str++;
+        s++;
     }
+    *str = '\0';
 }
 
 //Accepts version strings in a(.b(.c)?)? format
@@ -462,4 +479,15 @@ void waitForCapture() {
 	while (REG_DISPCAPCNT & DCAP_ENABLE) {
 		swiWaitForVBlank();
 	}
+}
+
+char* basename(char* path)
+{
+    int len = strlen(path);
+    int sindex;
+    for(int i = 0; i < len; ++i) {
+        if (path[i] == '/')
+            sindex = i;
+    }
+    return path+sindex+1;
 }

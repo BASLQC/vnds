@@ -1,6 +1,6 @@
 export SHORTNAME	:= VNDS
 export LONGNAME 	:= Visual Novel Reader
-export VERSION 		:= 1.4.3
+export VERSION 		:= 1.5.2
 ICON 		:= -b logo.bmp
 EFS			:= $(CURDIR)/tools/efs/efs
 
@@ -37,8 +37,9 @@ dist: $(TARGET).nds
 	cp config.ini vnds
 	cp _default.ttf vnds
 	cp license.txt vnds
-	cp readme.txt vnds
-	cp xmlParser-license.txt vnds
+	cp README vnds
+	cp logo.bmp vnds
+	#cp xmlParser-license.txt vnds
 	cp ChangeLog vnds
 	cp Makefile vnds
 	mkdir vnds/novels

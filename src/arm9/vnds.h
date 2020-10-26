@@ -2,6 +2,7 @@
 #define VNDS_H
 
 #include "common.h"
+#include "novelinfo.h"
 #include <map>
 #include <string>
 
@@ -13,6 +14,10 @@ class VNDS {
 		Archive* backgroundArchive;
 		Archive* soundArchive;
 		Archive* scriptArchive;
+
+        char nvlpath[MAXPATHLEN];
+        char nvltitle[128];
+        NovelType noveltype;
 
 		bool quit;
 		bool waitForInput;
@@ -42,6 +47,8 @@ class VNDS {
 
 		bool IsWaitingForInput();
 		int  GetDelay();
+        NovelType GetNovelType();
+        const char* GetTitle();
 
 		void SetDelay(int d);
 		void SetWaitForInput(bool b);

@@ -30,6 +30,10 @@ CFLAGS	:=	-g -Wall -Os \
 		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM7 -s
+#CFLAGS	+=	-DSUPPORT_WIFI
+CFLAGS	+=	-DSUPPORT_BACKLIGHT
+#CFLAGS	+=	-DSHRINK_AS_LIB
+
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
 
 

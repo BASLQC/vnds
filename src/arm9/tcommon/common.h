@@ -40,8 +40,10 @@ class Rect {
 
 extern u8 backlight;
 
-void tcommonFIFOCallback(u32 value, void* userdata);
+void FIFOBacklight(u32 value, void* userdata);
 void toggleBacklight();
+
+u8 chartohex(char c);
 
 //Copy a block of pixels, ignore transparency
 void blit(const u16* src, u16 sw, u16 sh,
@@ -84,6 +86,7 @@ bool mkdirs(const char* filename);
 bool fexists(const char* filename);
 void setupCapture(int bank);
 void waitForCapture();
+char* basename(char*);
 
 #include "gui/gui_types.h"
 #include "util_3d.h"

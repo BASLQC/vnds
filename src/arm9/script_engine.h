@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 enum VarType {
+	VT_null   = 0,
     VT_int    = 1,
     VT_string = 2
 };
@@ -34,12 +35,12 @@ class Variable {
         Variable(const char* value=NULL);
         virtual ~Variable();
 
-        bool operator== (Variable v) const;
-        bool operator!= (Variable v) const;
-        bool operator>  (Variable v) const;
-        bool operator<  (Variable v) const;
-        bool operator>= (Variable v) const;
-        bool operator<= (Variable v) const;
+        bool operator== (const Variable& v) const;
+        bool operator!= (const Variable& v) const;
+        bool operator>  (const Variable& v) const;
+        bool operator<  (const Variable& v) const;
+        bool operator>= (const Variable& v) const;
+        bool operator<= (const Variable& v) const;
 
 };
 
@@ -63,6 +64,7 @@ enum CommandType {
     ENDSCRIPT,
     LABEL,
     GOTO,
+    CLEARTEXT,
     END_OF_FILE //Special command that's used when you try to read more commands than are in the script
 };
 
@@ -72,6 +74,7 @@ struct Command {
     union {
 		struct {
 			char path[MAXPATHLEN];
+			s16  fadeTime;
 		} bgload;
 		struct {
 			int  x;
@@ -105,21 +108,25 @@ struct Command {
 		} vif;
 		struct {
 			char path[MAXPATHLEN];
+            char label[VAR_NAME_LENGTH];
 		} jump;
 		struct {
 			int  time;
 		} delay;
 		struct {
+			char label[VAR_NAME_LENGTH];
+		} label;
+		struct {
+			char label[VAR_NAME_LENGTH];
+		} lgoto;
+		struct {
+			char cleartype[VAR_NAME_LENGTH];
+		} cleartext;
+		struct {
 			char name[VAR_NAME_LENGTH];
 			int  low;
 			int  high;
 		} random;
-        struct {
-            char label[VAR_NAME_LENGTH];
-        } label;
-        struct {
-            char label[VAR_NAME_LENGTH];
-        } lgoto;
     };
 };
 
@@ -156,6 +163,7 @@ class ScriptEngine {
 		void QuickRead();
 		void SkipCommands(u32 number);
 		void SkipTextCommands(u32 number);
+		bool JumpToLabel(const char* lbl);
 
 		Command GetCommand(u32 offset);
 		const char* GetOpenFile();

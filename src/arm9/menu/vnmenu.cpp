@@ -57,6 +57,7 @@ VNMenu::VNMenu(GUI* gui, u16* textureI, VNDS* vnds) : Screen(gui) {
 			Rect(48, 0, 16, 16), Rect(48, 16, 16, 16), skin->GetLabelFontSize());
 	soundVolumeSpinner->SetNumeric(0, 16);
 	soundVolumeSpinner->SetSelected((preferences->GetSoundVolume()+7) / 8);
+	soundVolumeSpinner->SetSpinnerListener(this);
 
 	createLabeledWidget(this, "Sound Vol.", soundVolumeSpinner, Rect(32, 80, 184, 16),
 			skin->GetLabelFontSize());
@@ -65,6 +66,7 @@ VNMenu::VNMenu(GUI* gui, u16* textureI, VNDS* vnds) : Screen(gui) {
 			Rect(48, 0, 16, 16), Rect(48, 16, 16, 16), skin->GetLabelFontSize());
 	musicVolumeSpinner->SetNumeric(0, 16);
 	musicVolumeSpinner->SetSelected((preferences->GetMusicVolume()+7) / 8);
+	musicVolumeSpinner->SetSpinnerListener(this);
 
 	createLabeledWidget(this, "Music Vol.", musicVolumeSpinner, Rect(32, 104, 184, 16),
 			skin->GetLabelFontSize());
@@ -75,19 +77,27 @@ VNMenu::~VNMenu() {
 void VNMenu::Activate() {
 	Screen::Activate();
 
-	skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
+    if (vnds->GetNovelType() == NOVELZIP)
+        skinLoadImage("%s/menu_bg", backgroundI, 256, 192);
+    else
+	    skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
 }
 
 void VNMenu::OnButtonPressed(Button* button) {
+    char filen[128];
+    if (vnds->GetNovelType() == NOVELZIP)
+        strncpy(filen, "config.ini", 128);
+    else
+        strncpy(filen, "../../config.ini", 128);
+        
 	if (button == backButton) {
 		int ts = textSpeedSpinner->GetNumericValue();
 		if (ts <= 0) ts = -1;
 
 		preferences->SetFontSize(fontSizeSpinner->GetNumericValue(), vnds);
 		preferences->SetTextSpeed(ts, vnds);
-		preferences->SetSoundVolume(MIN(127, 8*soundVolumeSpinner->GetNumericValue()), vnds);
-		preferences->SetMusicVolume(MIN(127, 8*musicVolumeSpinner->GetNumericValue()), vnds);
-		if (!preferences->Save("../../config.ini")) {
+        
+		if (!preferences->Save(filen)) {
 			vnLog(EL_error, COM_CORE, "Error saving preferences");
 		}
 
@@ -100,11 +110,18 @@ void VNMenu::OnButtonPressed(Button* button) {
 	} else {
 		//OK button of confirmscreen has been pressed
 
-		if (!preferences->Save("../../config.ini")) {
+		if (!preferences->Save(filen)) {
 			vnLog(EL_error, COM_CORE, "Error saving preferences");
 		}
 
 		vnds->Quit();
 	}
+}
 
+void VNMenu::OnSpinnerChanged(Spinner* spinner) {
+	if (spinner == soundVolumeSpinner) {
+		preferences->SetSoundVolume(MIN(127, 8*soundVolumeSpinner->GetNumericValue()), vnds);
+	} else if (spinner == musicVolumeSpinner) {
+		preferences->SetMusicVolume(MIN(127, 8*musicVolumeSpinner->GetNumericValue()), vnds);
+	}
 }

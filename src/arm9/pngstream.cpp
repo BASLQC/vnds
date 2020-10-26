@@ -152,7 +152,7 @@ bool PNGStream::ReadLine() {
 		return false;
 	}
 
-	u32 stream_row[1024];
+	u32 stream_row[512];
 	png_read_row(png_ptr, (png_byte*)stream_row, png_bytep_NULL);
 	src = (u32*)stream_row;
 
@@ -195,7 +195,9 @@ bool PNGStream::Read(Archive* archive, const char* name, u16* out, u8* alphaOut)
 			soundEngine->Update();
 		}
 
-		memcpy(out, rgb, width*height*sizeof(u16));
+		if (out) {
+			memcpy(out, rgb, width*height*sizeof(u16));
+		}
 		if (alphaOut) {
 			memcpy(alphaOut, alpha, width*height*sizeof(u8));
 		}

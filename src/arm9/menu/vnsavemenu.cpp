@@ -4,6 +4,7 @@
 #include "../res.h"
 #include "../saveload.h"
 #include "../tcommon/text.h"
+#include "../tcommon/xml_parser.h"
 #include "../tcommon/gui/gui_common.h"
 
 #define ROWS 2
@@ -78,8 +79,14 @@ VNSaveMenu::~VNSaveMenu() {
 void VNSaveMenu::Activate() {
 	Screen::Activate();
 
-    skinLoadImage("../../%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
-    skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
+    if (vnds->GetNovelType() == NOVELZIP) {
+        skinLoadImage("%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
+        skinLoadImage("%s/menu_bg", backgroundI, 256, 192);
+    }
+    else {
+        skinLoadImage("../../%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
+        skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
+    }
 
 	int ids[1];
 	glGenTextures(1, ids);
@@ -199,6 +206,8 @@ void VNSaveMenu::UpdateImages() {
 	u16 imgBuffer[SAVE_IMG_W * SAVE_IMG_H];
     vramSetBankD(VRAM_D_LCD);
 
+    XmlFile xmlFile;
+
     //Store in the bottomright rect in VRAM
     blit(savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2, VRAM_D, 256, 256,
     		0, SAVE_IMG_H, 256-SAVE_IMG_W, 256-SAVE_IMG_H, SAVE_IMG_W, SAVE_IMG_H);
@@ -208,18 +217,21 @@ void VNSaveMenu::UpdateImages() {
         slots[n].valid = true;
 
         //Read date from save file
-        sprintf(path, "save/save%.2d.sav", n);
+        if (vnds->GetNovelType() == NOVELZIP)
+            sprintf(path, "save/%s/save%.2d.sav", vnds->GetTitle(), n);
+        else
+            sprintf(path, "save/save%.2d.sav", n);
         if (!fexists(path)) {
         	slots[n].valid = false;
         	continue;
         }
 
-        XMLNode rootE = XMLNode::openFileHelper(path, "save");
-        XMLNode dateE = rootE.getChildNode("date");
+        XmlNode* rootE = xmlFile.Open(path);
+        XmlNode* dateE = rootE->GetChild("date");
 
-        if (dateE.getText()) {
+        if (dateE) {
 			int labelL = SaveSlotRecord::labelLength;
-			strncpy(slots[n].label, dateE.getText(), labelL-1);
+			strncpy(slots[n].label, dateE->GetTextContent(), labelL-1);
 			slots[n].label[labelL-1] = '\0';
         } else {
         	slots[n].label[0] = '\0';
@@ -229,7 +241,10 @@ void VNSaveMenu::UpdateImages() {
         int dx = SAVE_IMG_W * (n % cols);
         int dy = SAVE_IMG_H * (n / cols);
 
-        sprintf(path, "save/save%.2d.img", n);
+        if (vnds->GetNovelType() == NOVELZIP)
+            sprintf(path, "save/%s/save%.2d.img", vnds->GetTitle(), n);
+        else
+            sprintf(path, "save/save%.2d.img", n);
         FILE* file = fopen(path, "rb");
         if (file) {
             fread(imgBuffer, sizeof(u16), SAVE_IMG_W * SAVE_IMG_H, file);
@@ -310,8 +325,8 @@ void VNSaveMenu::DrawBackground() {
 
 void VNSaveMenu::DrawSlot(int n) {
     int texcols = 256 / SAVE_IMG_W;
-    s16 vw = SAVE_IMG_W * VERTEX_SCALE;
-    s16 vh = SAVE_IMG_H * VERTEX_SCALE;
+    int vw = VERTEX_SCALE(SAVE_IMG_W);
+    int vh = VERTEX_SCALE(SAVE_IMG_H);
 
     int p = n / SLOTS_PER_PAGE;
 	int l = n % SLOTS_PER_PAGE;
@@ -342,8 +357,8 @@ void VNSaveMenu::DrawSlot(int n) {
     	}
 
     	drawQuad(&texture2, inttof32(x - (delta>>10)), inttof32(y - (delta>>10)),
-    			(SAVE_IMG_W + (delta>>9)) * VERTEX_SCALE,
-    			(SAVE_IMG_H + (delta>>9)) * VERTEX_SCALE,
+    			VERTEX_SCALE(SAVE_IMG_W + (delta>>9)),
+    			VERTEX_SCALE(SAVE_IMG_H + (delta>>9)),
     			r);
     } else {
     	drawQuad(&texture2, inttof32(x), inttof32(y), vw, vh, r);

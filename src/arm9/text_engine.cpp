@@ -193,10 +193,10 @@ void TextEngine::RepaintTime() {
 	printTime(timeStr);
 
 	Text* text = new Text();
-	text->SetBuffer(88, 16);
+	text->SetBuffer(w, h);
 	text->SetFontSize(10);
 	text->SetMargins(0, 0, 0, 0);
-	text->PrintString(timeStr);
+	text->PrintLine(timeStr);
 	int dx = w - text->GetPenX() - 4;
 	int dy = -1;
 	text->BlitToScreen(temp, w, h, 0, 0, dx, dy, w, h);
@@ -211,8 +211,8 @@ void TextEngine::RepaintTime() {
 void TextEngine::DrawWaitingIcon(u32 frame) {
 	int a = (frame>>3) & 7;
 	int s = (a < 4 ? 16 : -16);
-	v16 vw = VERTEX_SCALE * 16;
-	v16 vh = VERTEX_SCALE * 16;
+	v16 vw = VERTEX_SCALE(16);
+	v16 vh = VERTEX_SCALE(16);
 
 	glPolyFmt(BASE_POLY_FMT | POLY_ID(32) | POLY_ALPHA(31));
 	glTranslate3f32(0, 0, 5);
@@ -227,8 +227,8 @@ void TextEngine::DrawForeground() {
 	static u32 drawFrame = 0;
 
 	if (vnds->IsWaitingForInput()) {
-		v16 vw = VERTEX_SCALE * 16;
-		v16 vh = VERTEX_SCALE * 16;
+		v16 vw = VERTEX_SCALE(16);
+		v16 vh = VERTEX_SCALE(16);
 
 		int alpha = 30;
 		if (preferences->GetWaitInputAnim() == 1) {
@@ -258,12 +258,12 @@ void TextEngine::DrawForeground() {
 
 	int vw, vh;
 
-	vw = VERTEX_SCALE * 88;
-	vh = VERTEX_SCALE * 16;
+	vw = VERTEX_SCALE(88);
+	vh = VERTEX_SCALE(16);
 	drawQuad(&texture, inttof32(256-88), inttof32(192-16), vw, vh, Rect(64, 32, 88, 16));
 
-	vw = VERTEX_SCALE * 256;
-	vh = VERTEX_SCALE * 16;
+	vw = VERTEX_SCALE(256);
+	vh = VERTEX_SCALE(16);
 	drawQuad(&texture, 0, inttof32(176), vw, vh, Rect(225, 0, 16, 16));
 
 	Screen::DrawForeground();

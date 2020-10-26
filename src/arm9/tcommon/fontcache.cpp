@@ -143,6 +143,8 @@ u8 FontCache::GetLineHeight() {
 
 //Setters
 FontIdentifier* FontCache::SetFont(const char* filename) {
+	if (!filename) return NULL;
+
     for (u16 n = 0; n < fontsL; n++) {
         if (strcmp(fonts[n].filePath, filename) == 0) {
             //ClearCache();

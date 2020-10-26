@@ -15,7 +15,7 @@ include $(DEVKITARM)/ds_rules
 # all directories are relative to this makefile
 #---------------------------------------------------------------------------------
 BUILD		:= build
-SOURCES		:= . tcommon tcommon/gui menu select
+SOURCES		:= . tcommon tcommon/gui menu select download
 INCLUDES	:= include
 
 #---------------------------------------------------------------------------------

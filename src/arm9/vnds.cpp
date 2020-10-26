@@ -1,7 +1,6 @@
 #include "vnds.h"
 
 #include "graphics_engine.h"
-#include "novelinfo.h"
 #include "res.h"
 #include "script_engine.h"
 #include "sound_engine.h"
@@ -45,7 +44,14 @@ VNDS::VNDS(NovelInfo* novelInfo) {
     delete[] textureI;
 
     //Start
-    chdir(novelInfo->GetPath());
+    noveltype = novelInfo->GetNovelType();
+    strcpy(nvltitle, novelInfo->GetTitle());
+    if (noveltype == FOLDER)
+        chdir(novelInfo->GetPath());
+    else
+        strcpy(nvlpath, novelInfo->GetPath());
+    
+        
 
     vnLog(EL_verbose, COM_CORE, "VNDS init ok");
 }
@@ -111,6 +117,12 @@ bool VNDS::IsWaitingForInput() {
 int VNDS::GetDelay() {
 	return delay;
 }
+NovelType VNDS::GetNovelType() {
+	return noveltype;
+}
+const char* VNDS::GetTitle() {
+	return nvltitle;
+}
 
 void VNDS::Update() {
 	if (gui->GetActiveScreen() != textEngine) {
@@ -142,8 +154,8 @@ void VNDS::Update() {
 					REG_BG2CNT = BG_BMP16_256x256 | BG_BMP_BASE(8) | BG_PRIORITY(1);
 					videoSetMode(DEFAULT_VIDEO_MODE | DISPLAY_BG2_ACTIVE);
 
-				    REG_BLDALPHA = 0 | (0x10 << 8);
-				    REG_BLDCNT = BLEND_ALPHA | BLEND_SRC_BG2 | BLEND_DST_BG0 | BLEND_DST_BG3;
+					REG_BLDALPHA = 0 | (0x10 << 8);
+					REG_BLDCNT = BLEND_ALPHA | BLEND_SRC_BG2 | BLEND_DST_BG0 | BLEND_DST_BG3;
 				    for (int n = 0; n <= fadeFrames; n++) {
 				        int a = 0x0B * n / fadeFrames;
 				        int b = 0x10 - a;
@@ -261,14 +273,25 @@ void VNDS::Run() {
 	//Open archives
     consoleClear();
     zipError = false;
-    foregroundArchive = openArchive("foreground", "foreground/", &onZipProgress);
-    if (!zipError) {
-    backgroundArchive = openArchive("background", "background/", &onZipProgress);
-    if (!zipError) {
-    scriptArchive = openArchive("script", "script/", &onZipProgress);
-    if (!zipError) {
-    soundArchive = openArchive("sound", "sound/", &onZipProgress);
-    if (!zipError) {
+    
+    if (noveltype == NOVELZIP) {
+        /*foregroundArchive = openZipFile(nvlpath, "foreground/", &onZipProgress);
+        backgroundArchive = openZipFile(nvlpath, "background/", &onZipProgress);
+        scriptArchive = openZipFile(nvlpath, "script/", &onZipProgress);
+        soundArchive = openZipFile(nvlpath, "sound/", &onZipProgress);*/
+        foregroundArchive = backgroundArchive = scriptArchive = soundArchive = 
+            openZipFile(nvlpath, "", &onZipProgress);
+    }
+    else {
+        foregroundArchive = openArchive("foreground", "foreground/", &onZipProgress);
+        backgroundArchive = openArchive("background", "background/", &onZipProgress);
+        scriptArchive = openArchive("script", "script/", &onZipProgress);
+        soundArchive = openArchive("sound", "sound/", &onZipProgress);
+    }
+    if (zipError) {
+        resetVideo();
+        return;
+    }
     consoleClear();
 
     //Load font
@@ -318,19 +341,20 @@ void VNDS::Run() {
 	pngStream = NULL;
 
 	//Close ZIP archives
-	closeArchive(soundArchive);
+    if (noveltype == NOVELZIP) { // close one = close all
+        closeArchive(soundArchive);
+    }
+    else {
+	    closeArchive(soundArchive);
+        closeArchive(scriptArchive);
+        closeArchive(backgroundArchive);
+        closeArchive(foregroundArchive);
+    }
 	soundArchive = NULL;
-	}
-	closeArchive(scriptArchive);
 	scriptArchive = NULL;
-	}
-	closeArchive(backgroundArchive);
 	backgroundArchive = NULL;
-	}
-	closeArchive(foregroundArchive);
 	foregroundArchive = NULL;
-	}
-
+    
 	resetVideo();
 }
 
@@ -387,17 +411,21 @@ void VNDS::SetVar(map<std::string, Variable>& map,
 		return;
 	}
 
-    Variable var;
-    if (map.count(value) != 0) {
-        var = map[value];
-    }
-    else {
-	    Variable var2(value); // sure is init only code
-        var = var2;
+    Variable var(value);
+    if (variables.count(value) != 0) {
+        var = variables[value];
+    } else if (globals.count(value) != 0) {
+        var = globals[value];
     }
 	Variable target = map[name];
 
-	switch (target.type) {
+	VarType inferredType = VT_int;
+	if (target.type == VT_string || var.type == VT_string) {
+		inferredType = VT_string;
+	}
+	target.type = inferredType;
+
+	switch (inferredType) {
 	case VT_int:
 		switch (op) {
 		case '+':
@@ -434,6 +462,9 @@ void VNDS::SetVar(map<std::string, Variable>& map,
 		}
 
 		target.intval = atoi(target.strval);
+		break;
+	case VT_null:
+		//Do nothing
 		break;
 	}
 

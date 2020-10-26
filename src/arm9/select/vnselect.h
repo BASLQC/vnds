@@ -21,6 +21,7 @@ class VNSelect {
 
 		void Run();
 		void Play();
+        void Download();
 };
 
 #endif

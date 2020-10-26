@@ -46,7 +46,7 @@
 
 // buffer sizes, should fit any usage (feel free to adjust if needed)
 #define AS_AUDIOBUFFER_SIZE 24 * MAX_NCHAN * MAX_NGRAN * MAX_NSAMP
-#define AS_FILEBUFFER_SIZE  8 * 1024   // file buffer size
+#define AS_FILEBUFFER_SIZE  32 * 1024   // file buffer size
 
 // file access functions
 #define MP3FILE                         FileHandle

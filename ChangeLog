@@ -1,3 +1,53 @@
+* 1.5.2 03/06/09
+    Jake:
+        * fixed problems with music with too high a bitrate
+
+* 1.5.1 16/05/09
+    Jake:
+        * .novel thumbnail.png select screen crash bug fixed
+
+* 1.5.0 04/05/09
+    Jake:
+        * .novel support
+        * download novels directly onto ds
+        * redid FIFO stuff
+        * 'if var == 0' works with unset variables again
+        
+    Dilt:
+        * cleartext command
+
+* 1.4.7 23/04/09
+    anoNL:
+        * a glitch in the image cache caused corrupted images to display
+        * scripts starting with a choice command didn't load properly
+        * an incorrect linenumber would be saved after following a goto
+        * text commands starting with a space were rendered incorrectly
+        * large (>1KB) save files sometimes caused stack overflows
+
+* 1.4.6 10/04/09
+    Jake:
+        jump takes label argument
+
+* 1.4.5 09/04/09
+    anoNL:
+        * bg changes sometimes didn't display
+        * clock didn't update
+        * assigning values from local vars to globals didn't work
+        * bgload now has a second param to control the fade speed
+        * bgm volume changes take effect immediately
+        * comparing ints with strings works as expected now
+        * support for {$var} notation
+        * better autofade algorithm
+        * updated packaged tools
+
+* 1.4.4 24/03/09
+    Jake:
+        * variables can be inserted into most commands
+    
+    anoNL:
+        * fixed sound skipping
+        * string variables fixed
+
 * 1.4.3 21/03/09
     Jake:
         * variables can be assigned to other variables

@@ -3,13 +3,10 @@
 
 #include <nds.h>
 
-const int INV_VERTEX_SCALE = inttof32(64);
-const int VERTEX_SCALE = divf32(inttof32(1), inttof32(64)); //= (1 / 64) in x.12 format
-
-struct v2{
-    int x;
-    int y;
-};
+#define VERTEX_SCALE_FACTOR 	0x40		//divf32(inttof32(1), inttof32(64))
+#define INV_VERTEX_SCALE_FACTOR 0x40000		//inttof32(64)
+#define VERTEX_SCALE(x)			((x) << 6)
+#define INV_VERTEX_SCALE(x)		((x) << 18)
 
 struct TextureData {
     int id;

@@ -2,7 +2,6 @@
 #define SAVELOAD_H
 
 #include "common.h"
-#include "xmlParser.h"
 
 #define SAVE_SLOTS 18
 #define SAVE_IMG_W 64

@@ -8,7 +8,9 @@
 #include "vnds_types.h"
 #include "vnds.h"
 #include "select/vnselect.h"
+#include "download/vndownload.h"
 #include "tcommon/text.h"
+#include "tcommon/xml_parser.h"
 
 #ifdef USE_EFS
 #include "efs_lib.h"
@@ -93,11 +95,7 @@ int main(int argc, char** argv) {
 	powerOn(POWER_ALL);
     defaultExceptionHandler();
 
-    if (!fifoSetValue32Handler(TCOMMON_FIFO_CHANNEL_ARM9, &tcommonFIFOCallback, NULL)) {
-    	return 1; //Fatal Error
-    }
-
-	//Wifi_InitDefault(false);
+    fifoSetValue32Handler(FIFO_BACKLIGHT, &FIFOBacklight, NULL);
 
     //Init filesystem
 	//NOTE: EFS started misbehaving when the .nds grew to over 32MB
@@ -129,6 +127,8 @@ int main(int argc, char** argv) {
 	AS_Init(AS_MODE_MP3, 24*1024);
     AS_SetDefaultSettings(AS_ADPCM, 22050, 0);
 
+    Wifi_InitDefault(INIT_ONLY);
+
     //Create log
     vnInitLog(0);
 
@@ -142,6 +142,16 @@ int main(int argc, char** argv) {
 
 		VNSelect* vnselect = new VNSelect();
 		vnselect->Run();
+        if (vnselect->selectedNovelInfo == NULL) {
+            delete vnselect;
+            
+            VNDownload* vndownload = new VNDownload();
+            vndownload->Run();
+            delete vndownload;
+            
+            continue;
+        }
+        
 		memcpy(selectedNovelInfo, vnselect->selectedNovelInfo, sizeof(NovelInfo));
 		delete vnselect;
 
@@ -151,9 +161,9 @@ int main(int argc, char** argv) {
 			skin->Load(path);
 		}
 
-		VNDS* vnds = new VNDS(selectedNovelInfo);
-		vnds->Run();
-		delete vnds;
+        VNDS* vnds = new VNDS(selectedNovelInfo);
+        vnds->Run();
+        delete vnds;
 	}
 	delete selectedNovelInfo;
 

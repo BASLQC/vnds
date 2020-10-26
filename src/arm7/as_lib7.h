@@ -23,9 +23,12 @@
 
 #include <nds.h>
 
-
 // mp3 static defines
-#define AS_DECODEBUFFER_SIZE    MAX_NCHAN * MAX_NGRAN * MAX_NSAMP
+#ifdef SHRINK_AS_LIB
+#define AS_DECODEBUFFER_SIZE (MAX_NCHAN * 1 * MAX_NSAMP)
+#else
+#define AS_DECODEBUFFER_SIZE (MAX_NCHAN * MAX_NGRAN * MAX_NSAMP)
+#endif
 
 // mp3 commands
 typedef enum

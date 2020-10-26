@@ -48,9 +48,12 @@ bool loadImage(Archive* archive, const char* filename, u16** rgbOut, u8** alphaO
 				if (outW) *outW = 256;
 				if (outH) *outH = 192;
 
-				if (generate && !*rgbOut) *rgbOut = new u16[256*192];
+				u16* rgb = (rgbOut ? *rgbOut : NULL);
+				if (generate && rgbOut && !rgb) {
+					*rgbOut = rgb = new u16[256*192];
+				}
 
-				success = JPEG_DecompressImage((const unsigned char*)read, *rgbOut, 256, 192);
+				success = JPEG_DecompressImage((const unsigned char*)read, rgb, 256, 192);
 
 				delete[] read;
 				fhClose(fh);
@@ -68,10 +71,17 @@ bool loadImage(Archive* archive, const char* filename, u16** rgbOut, u8** alphaO
 					if (outW) *outW = w;
 					if (outH) *outH = h;
 
-					if (generate && !(*rgbOut)) *rgbOut = new u16[w*h];
-					if (generate && !(*alphaOut)) *alphaOut = new u8[w*h];
-
-					success = pngStream->Read(archive, filename, *rgbOut, *alphaOut);
+					u16* rgb = (rgbOut ? *rgbOut : NULL);
+					u8* alpha = (alphaOut ? *alphaOut : NULL);
+					if (generate) {
+						if (rgbOut && !rgb) {
+							*rgbOut = rgb = new u16[w*h];
+						}
+						if (alphaOut && !alpha) {
+							*alphaOut = alpha = new u8[w*h];
+						}
+					}
+					success = pngStream->Read(archive, filename, rgb, alpha);
 				}
 			}
 		}

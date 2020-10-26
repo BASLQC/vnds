@@ -17,8 +17,8 @@ void VNTextScrollPane::DrawScrollBar() {
 		return; //Don't show scrollbar if we're scrolled all the way down
 	}
 
-	const int vw = VERTEX_SCALE * 8;
-	const int vh = VERTEX_SCALE * 16;
+	const int vw = VERTEX_SCALE(8);
+	const int vh = VERTEX_SCALE(16);
 
 	Rect bounds = GetBounds();
 	Rect uv;
@@ -42,8 +42,8 @@ void VNTextScrollPane::DrawScrollBarThumb(int dy) {
 		return; //Don't show scrollbar if we're scrolled all the way down
 	}
 
-	const int vw = VERTEX_SCALE * 8;
-	const int vh = VERTEX_SCALE * 16;
+	const int vw = VERTEX_SCALE(8);
+	const int vh = VERTEX_SCALE(16);
 
 	Rect bounds = GetBounds();
 

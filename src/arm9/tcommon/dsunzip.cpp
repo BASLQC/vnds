@@ -21,10 +21,10 @@ bool unzip(const char* zipFile, const char* targetFolder) {
 	}
 
 	char targetPath[MAXPATHLEN];
-	char buffer[4096];
-
 	strcpy(targetPath, targetFolder);
 	mkdirs(targetPath);
+
+	char buffer[4096];
 
 	const u32 filecount = archive->filecount;
 	for (u32 index = 0; index < filecount; index++) {
@@ -32,6 +32,10 @@ bool unzip(const char* zipFile, const char* targetFolder) {
 
 		sprintf(targetPath, "%s/%s%s", targetFolder, archive->prefix, r.filename);
 		mkdirs(targetPath);
+
+		if (r.filename[0] == '\0' || r.filename[strlen(r.filename)-1] == '/') {
+			continue; //This entry is a folder, we don't have to write those
+		}
 
 		FILE* outFile = fopen(targetPath, "wb");
 		if (outFile) {
@@ -283,7 +287,8 @@ int findCentralDirectory(FILE* file, int pos) {
 Archive* openZipFile(const char* filename, const char* prefix, void (*callback)(int, int, const char*)) {
     char nameBuffer[MAXPATHLEN];
     sprintf(nameBuffer, "Opening %s...", filename);
-    callback(0, 0, nameBuffer);
+
+    if (callback) callback(0, 0, nameBuffer);
 
     FILE* file = fopen(filename, "rb");
     if (!file) {
@@ -337,7 +342,7 @@ Archive* openZipFile(const char* filename, const char* prefix, void (*callback)(
 
         fread(&compressionMethod, 2, 1, file);
         if (compressionMethod != 0) {
-        	callback(n+1, -1, NULL);
+        	if (callback) callback(n+1, -1, NULL);
         	delete archive;
         	return NULL;
         }
@@ -374,7 +379,7 @@ Archive* openZipFile(const char* filename, const char* prefix, void (*callback)(
 
     sort(archive->records, archive->records+archive->filecount, &archiveRecordComp);
 
-    callback(1, 1, "Writing cache...");
+    if (callback) callback(1, 1, "Writing cache...");
 
     archive->SaveFileEntries(filename);
     return archive;

@@ -6,6 +6,7 @@
 
 VNSelect::VNSelect() {
 	selectedNovel = -1;
+    selectedNovelInfo = NULL;
 
 	gui = new GUI();
 
@@ -45,3 +46,11 @@ void VNSelect::Play() {
 		selectedNovel = -1;
 	}
 }
+
+void VNSelect::Download() {
+    if (selectedNovelInfo != NULL)
+        delete selectedNovelInfo;
+    selectedNovelInfo = NULL;
+    selectedNovel = 1;
+}
+

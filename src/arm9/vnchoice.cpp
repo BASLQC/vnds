@@ -127,8 +127,8 @@ void VNChoice::DrawListItemForeground(s16 index, Rect r, bool selected) {
 	TextScrollPane::DrawListItemForeground(index, r, selected);
 
 	if (GetSelectedIndex() == index) {
-		s32 vw = 16 * VERTEX_SCALE;
-		s32 vh = 16 * VERTEX_SCALE;
+		s32 vw = VERTEX_SCALE(16);
+		s32 vh = VERTEX_SCALE(16);
 		drawQuad(texture, inttof32(r.x), inttof32(r.y-2), vw, vh, Rect(0, 48, 16, 16));
 	}
 }

@@ -122,13 +122,13 @@ void ScrollPane::DrawForeground() {
 void ScrollPane::DrawScrollBar() {
 	Rect bounds = GetBounds();
 
-	int vw = VERTEX_SCALE * scrollBarWidth;
-	int vh = VERTEX_SCALE * scrollBarHeight;
-	int s = (bounds.h+scrollBarHeight-1) / scrollBarHeight;
+	int vw = VERTEX_SCALE(scrollBarWidth);
+	int vh = VERTEX_SCALE(scrollBarHeight);
+	int s = (bounds.h+scrollBarHeight) / scrollBarHeight;
 
 	glTranslate3f32(0, 0, -100);
 	for (int n = 0; n < s; n++) {
-		drawQuad(texture, inttof32(bounds.x+bounds.w-scrollBarWidth), inttof32(bounds.y+(n<<4)),
+		drawQuad(texture, inttof32(bounds.x+bounds.w-scrollBarWidth), inttof32(bounds.y+(n<<4)-1),
 				vw, vh, scrollBarImage);
 	}
 	glTranslate3f32(0, 0, 100);
@@ -136,8 +136,8 @@ void ScrollPane::DrawScrollBar() {
 void ScrollPane::DrawScrollBarThumb(int dy) {
 	Rect bounds = GetBounds();
 
-	int vw = VERTEX_SCALE * scrollBarWidth;
-	int vh = VERTEX_SCALE * scrollBarHeight;
+	int vw = VERTEX_SCALE(scrollBarWidth);
+	int vh = VERTEX_SCALE(scrollBarHeight);
 	drawQuad(texture, inttof32(bounds.x+bounds.w-scrollBarWidth), inttof32(dy),
 			vw, vh,
 			Rect(scrollBarImage.x+scrollBarImage.w, scrollBarImage.y, scrollBarImage.w, scrollBarImage.h));

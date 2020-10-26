@@ -170,7 +170,7 @@ void Text::PopState(u8 amount) {
     marginLeft = s->marginLeft; marginRight  = s->marginRight;
     marginTop  = s->marginTop;  marginBottom = s->marginBottom;
 
-    if (font != s->font) {
+    if (s->font && font != s->font) {
         SetFont(s->font->filePath);
     }
     if (fontsize != s->fontsize) {

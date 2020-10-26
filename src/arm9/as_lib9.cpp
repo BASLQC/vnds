@@ -56,8 +56,9 @@ void AS_Init(u8 mode, u32 mp3BufferSize) {
     as_default_rate = 22050;
     as_default_delay = AS_SURROUND;
 
-    if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_INIT_SOUND_ARM7)
-    		|| !fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, (u32)ipcSound)) //No SendAddress, ipcSound is outside main RAM
+    //if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_INIT_SOUND_ARM7)
+    //		|| !fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, (u32)ipcSound)) //No SendAddress, ipcSound is outside main RAM
+    if (!fifoSendValue32(FIFO_AUDIO, (u32)ipcSound))
     {
     	consoleDemoInit();
     	iprintf("Fatal error while initializing sound.\n");

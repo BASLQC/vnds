@@ -18,8 +18,8 @@ void drawQuad(TextureData* texture, s32 x, s32 y, v16 vw, v16 vh, Rect uv) {
 
     glTranslate3f32(x, y, 0);
 
-    MATRIX_SCALE = INV_VERTEX_SCALE;
-	MATRIX_SCALE = INV_VERTEX_SCALE;
+    MATRIX_SCALE = INV_VERTEX_SCALE_FACTOR;
+	MATRIX_SCALE = INV_VERTEX_SCALE_FACTOR;
 	MATRIX_SCALE = inttof32(1);
 
     //glRotateZi(drawAngle);
@@ -67,8 +67,7 @@ void init3D() {
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-    glOrthof32(0, mulf32(inttof32(256), VERTEX_SCALE), mulf32(inttof32(192), VERTEX_SCALE),
-        0, floattof32(0.1), inttof32(100));
+    glOrthof32(0, VERTEX_SCALE(256), VERTEX_SCALE(192), 0, floattof32(0.1), inttof32(100));
 
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
@@ -317,10 +316,12 @@ void loadTexture(TextureData* target, GL_TEXTURE_TYPE_ENUM format, const char* d
 	target->format = format;
 	target->size = dtaL + palL;
 	if (dta) {
+		DC_FlushRange(dta, dtaL);
     	glTexImage2Da(0, 0, format, size, size, 0, param, dta);
     	delete[] dta;
     }
 	if (pal) {
+		DC_FlushRange(pal, palL);
     	target->pal_addr = gluTexLoadPal((u16*)pal, palL, format);
     	delete[] pal;
     }

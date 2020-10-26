@@ -46,7 +46,7 @@ void Spinner::AddChoice(const char* label, int value) {
 
 	SpinnerChoice choice;
 	strncpy(choice.label, label, 63);
-	choice.label[64] = '\0';
+	choice.label[63] = '\0';
 	choice.value = value;
 	choices.push_back(choice);
 }

@@ -27,6 +27,7 @@ class VNSelectScreen : public Screen, public ButtonListener {
 		TextScrollPane* scrollPane;
 		Button* aboutButton;
 		Button* playButton;
+        Button* downloadButton;
 
 		u8 loadState;
 
@@ -50,6 +51,7 @@ class VNSelectScreen : public Screen, public ButtonListener {
 		virtual void OnButtonPressed(Button* button);
 		virtual void Update(u32& down, u32& held, touchPosition touch);
 		virtual void DrawTopScreen();
+		virtual void DrawForeground();
 
 		int GetSelectedIndex();
 };

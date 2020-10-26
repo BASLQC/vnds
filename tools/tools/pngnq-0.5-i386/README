@@ -1,0 +1,68 @@
+PNGNQ - PNG NEUQUANT
+VERSION 0.5
+
+USAGE: 
+
+  pngnq [-vfhV][-s sample factor][-e extension][-d dir][-n colours][input files]
+  options:
+     -v Verbose mode. Prints status messages.
+     -f Force ovewriting of files.
+     -s Sample factor. The neuquant algorithm samples pixels stepping by this value.
+     -n Number of colours the quantized image is to contain. Range: 2 to 256. Defaults to 256.
+     -e Specifies the new filename extension. Defaults to -nq8.png. 
+        Will drop .png from original filenames.
+     -d Relocates the quantized files into this directory. 
+        Otherwise output files stay in the same directory as the input files. 
+     input files: The png files to be processed. Defaults to standard input if not specified.
+
+     -V Print version number and library versions.
+     -h Print this help.
+
+  Quantizes a 32-bit RGBA PNG image to an 8 bit RGBA palette PNG
+  using the neuquant algorithm. The output file name is the input file name
+  extended with "-nq8.png" or a specified extension.
+
+NOTES:
+
+Pngnq is a tool for quantizing PNG images in RGBA format.
+Pngnq is an adaptation by Stuart Coyle of Greg Roelf's pnqquant program
+using Anthony Dekker's neuquant algorithm.
+
+Pngnq exists because I needed a lot of png images in RGBA format
+to be quantized. After some searching, the only tool I could find
+that worked was pngquant. I tried pngquant but found that the median
+cut algorithm that it uses, with or without dithering, gave inferior
+looking results to the neuquant algorithm. You can see the difference
+demonstrated on the neuquant web page:  
+http://members.ozemail.com.au/~dekker/NEUQUANT.HTML.
+
+The program was written to fulfill the specific needs of the small
+project I was working on, and as such does not have all the
+functionality one could want.
+
+I use Greg Roelf's png reading and writing code unchanged for the most part.
+The pngnq source code includes neuquant32, which is an extension of Anthony Dekker's 
+neuquant, to make it handle 4 channels of pixel data.
+
+This program has been tested on: 
+	Linux 32 and 64 bit
+	Mac OSX
+	OpenBSD 32 bit
+	Win32
+
+TODO list:
+
+	I want to change the error measure to use CIE u' v' color
+	space and see if results are visually better.
+
+	Limited image input formats. I am not doing much checking on
+	the image pixel depth etc.
+
+	Do a detailed comparison with other quantization algortithms.
+		-  the pngcomp tool is in development to do this
+
+	Make a GIMP plugin that uses this.
+
+Copyright (c) Stuart Coyle 2004-2007 stuart.coyle@gmail.com
+
+See LICENCES for details of copyrights held on this program.

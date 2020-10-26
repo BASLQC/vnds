@@ -3,8 +3,9 @@ VNDS .scr file format:
 for any clarification on the usage of these, look at a .scr from another VN
 
 bgload:
-    usage: bgload file
+    usage: bgload file [fadetime]
     looks in background/ for the image and draws it as the background
+    control length of fade in frames with fadetime (default 16)
     
 setimg:
     usage: setimg file x y
@@ -15,7 +16,6 @@ sound:
     looks in sound/ for the file, loads it into memory(don`t do this with 
         anything over a meg in size) and plays it X times. -1 for infinite
         looping.
-    sound is expected to be in 22050Hz 1 channel raw imadpcm format.
     if file is ~, it stops any currently playing sound.
     
 music:
@@ -32,7 +32,6 @@ text:
     Prepending string with @ makes it not require clicking to advance
     if string is ~, it`ll make a blank line
     if string is !, it`ll make a blank line and require clicking to advance
-    use $varname to output a variable
     
 choice:
     usage: choice option1|option2|etc...
@@ -51,6 +50,8 @@ setvar/gsetvar:
         for things like character flags and such
     gsetvar sets variables in global.sav
         for things like cleared path flags
+    prefix a variable with $ to use it in other commands: `text var is $var`
+        {$var} can be used if needed to separate the variable from other text
         
 if/fi:
     usage: 
@@ -66,8 +67,9 @@ if/fi:
             variable doesnt exist.
     
 jump:
-    usage: jump file.scr
+    usage: jump file.scr [label]
     looks in script/ for the .scr and starts reading off that.
+    if label is specified, jumps to that label in the script
 
 delay:
     usage: delay X
@@ -82,8 +84,15 @@ label/goto:
         label name
         goto name
     
-    a goto command will search the text file for a label with the same name and
-        start the script from that part
+    a goto command will search the current script for a label with the same 
+        name and start the script from that part
+
+cleartext:
+    usage: cleartext [type]
+    clears text from the screen.
+ 
+    if no type is given, it`ll make enough blank lines to fill the display
+    if type is !, it`ll completely clear the text buffer (including history)
 
 Notes:
     titlescreen:
@@ -104,13 +113,13 @@ Conversion:
             in size.
 
     Sound:
-        Sound effects should be encoded in <MS IMA-ADPCM mono 22050Hz>.
+        Sound effects should be encoded in aac.
 
-        Example using sox:    sox.exe infile -r 22050 -i -1 -c 1 outfile.wav
-        Example using ffmpeg: ffmpeg -i infile -ar 22050 -acodec adpcm_ima_wav -ac 1 outfile.wav
-
-        After converting you have to remove the headers from the file:
-
-        Example using ima2raw: ima2raw.exe outfile.wav
-
-        source code and ima2raw.exe are included in the tools folder.
+        `ffmpeg -i infile -acodec libfaac outfile`
+        
+    .novel/.zip:
+        For increased file access performance, put the files in an uncompressed
+        .zip file. each folder should get its own archive: background.zip, 
+        foreground.zip, script.zip, sound.zip. As of 1.5.0, vnds supports the
+        .novel format, which is an uncompressed zip you can just drop in the
+        novel/ folder without extracting.
