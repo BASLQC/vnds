@@ -4,6 +4,21 @@
 #include "common.h"
 #include "fontcache.h"
 
+/*
+ * Draw methods accept ANSI color escape codes "\x1b[$1;$2m"
+ * ----------------------------------------------------------------------------
+ * Reset       0        Reset         39;0
+ * Black       30;0     Gray          30;1
+ * Maroon      31;0     Red           31;1
+ * Green       32;0     Lime          32;1
+ * Olive       33;0     Yellow        33;1
+ * Navy        34;0     Blue          34;1
+ * Purple      35;0     Fuchsia       35;1
+ * Teal        36;0     Aqua          36;1
+ * Silver      37;0     White         37;1
+ * ----------------------------------------------------------------------------
+ */
+
 #define ALPHA_THRESHOLD     16
 #define MAX_STATES          32
 
@@ -33,15 +48,16 @@ class Text {
         u8*  bufferAlpha;
         u16  bufferW, bufferH;
 
+        u8   ProcessEscapeCode(const char* string, u16 defaultColor);
         void PrintChar(u32 c);
-        int  WrapString(const char* string, bool draw);
+        int  WrapString(const char* string, bool draw, void(*drawFunc)(const char*)=NULL);
 
     public:
     	u16 lineBreaks[64]; //Value set in WrapString
     	u16 lineBreaksL;    //Value set in WrapString
 
         Text(FontCache* fc=defaultFontCache);
-        ~Text();
+        virtual ~Text();
 
         void PushState();
         void PopState(u8 amount=1);
@@ -51,7 +67,7 @@ class Text {
             s16 sx=0, s16 sy=0, s16 dx=0, s16 dy=0, u16 cw=SCREEN_WIDTH, u16 ch=SCREEN_HEIGHT);
         void BlitToScreen(u16* screen, u16 screenW=SCREEN_WIDTH, u16 screenH=SCREEN_HEIGHT,
             s16 sx=0, s16 sy=0, s16 dx=0, s16 dy=0, u16 cw=SCREEN_WIDTH, u16 ch=SCREEN_HEIGHT);
-        u8   PrintString(const char* str);
+        u8   PrintString(const char* str, void(*drawFunc)(const char*)=NULL);
         void PrintLine(const char* str);
         void PrintNewline();
 

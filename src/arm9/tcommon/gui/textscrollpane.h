@@ -20,13 +20,15 @@ class TextScrollPane : public ScrollPane {
 		char* textBuffer;
 		int textBufferL;
 
+		friend void printCallback(const char* text);
+
 	public:
 		TextScrollPane(Screen* screen, Rect upImg, Rect downImg, Rect barImg, FontCache* fontCache=NULL);
 		virtual ~TextScrollPane();
 
 		void RemoveAllItems();
 		void RemoveItems(int number);
-		virtual bool AppendText(const char* str, u16 color=0, bool stripSpaces=true);
+		virtual bool AppendText(const char* str, u16 color=0, bool doLayout=true);
 		virtual void DrawListItemBackground(s16 index, u16* buffer, u16 w, u16 h, bool selected);
 		virtual void DrawListItemForeground(s16 index, Rect bounds, bool selected);
 		virtual void OnButtonPressed(Button* button);

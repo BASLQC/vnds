@@ -26,7 +26,7 @@ class VNSaveMenu : public Screen, public ButtonListener {
 		Button* leftButton;
 		Button* rightButton;
 		Text* text;
-		TextureData texture2;
+		Texture texture2;
 		bool save;
 
 		s16 slot;

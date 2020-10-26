@@ -14,9 +14,12 @@ class Screen {
 	protected:
 		u16* textureImage;
 
+		int ListWidgets(Widget** out);
+		int ListWidgetsReverse(Widget** out);
+
 	public:
 		GUI* gui;
-		TextureData texture;
+		Texture* texture;
 		u16* background;
 		u16* backgroundImage;
 

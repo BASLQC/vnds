@@ -52,21 +52,20 @@ setvar/gsetvar:
         for things like cleared path flags
     prefix a variable with $ to use it in other commands: `text var is $var`
         {$var} can be used if needed to separate the variable from other text
-    strings need to have ""s around them: `setvar asdf = "qwerty"`
         
 if/fi:
     usage: 
         if x == 1
             commands
         fi
-        if y == "asdf"
-            something else
-        fi
     conditional jump
     
     if true, it keeps reading. if false, it skips till it encounters a fi
-    it is possible to nest if/fi blocks
-        
+    Note: left operand must be a variable, right may be either
+        This is due to either redoing every script to put $ in front of the
+            variables, or just making left not default to string if the
+            variable doesnt exist.
+    
 jump:
     usage: jump file.scr [label]
     looks in script/ for the .scr and starts reading off that.
@@ -108,8 +107,8 @@ Conversion:
         Sprites should be in png format and backgrounds as jpg or png. Alpha 
             transparency is supported for sprites. 
         To avoid color banding, decrease the color depth of the images to 
-            5bits/pixel and use dithering (png doesn't support 5bits/pixel, so
-            store them in 8bits/pixel instead).
+            5bits/channel and use dithering (png doesn't support 5bits/channel,
+			so store them in 8bits/channel instead).
         For background images you should also make sure that they're 256x192 
             in size.
 
@@ -118,9 +117,7 @@ Conversion:
 
         `ffmpeg -i infile -acodec libfaac outfile`
         
-    .novel/.zip:
+	.zip:
         For increased file access performance, put the files in an uncompressed
         .zip file. each folder should get its own archive: background.zip, 
-        foreground.zip, script.zip, sound.zip. As of 1.5.0, vnds supports the
-        .novel format, which is an uncompressed zip you can just drop in the
-        novel/ folder without extracting.
+        foreground.zip, script.zip, sound.zip.

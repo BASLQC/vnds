@@ -6,14 +6,17 @@
 #define DVK_ENTER 10
 
 TextField::TextField(Screen* screen, u8 size, const char* str) : Widget(screen) {
-	string = (str ? strdup(str) : NULL);
+	string = NULL;
+	limit = -1;
 	fontsize = size;
 
 	text = new Text();
 	text->SetFontSize(fontsize);
+
+	SetText(str);
 }
 TextField::~TextField() {
-	if (string) free(string);
+	if (string) delete[] string;
 
 	delete text;
 }
@@ -75,30 +78,28 @@ bool TextField::OnTouch(u32& down, u32& held, touchPosition touch) {
     Keyboard* defaultKdb = keyboardGetDefault();
     Keyboard* kbd = keyboardInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x512,
     		defaultKdb->mapBase, defaultKdb->tileBase, true, true);
-	kbd->scrollSpeed = 0;
+	memset(bgGetMapPtr(kbd->background), 0, 256*32);
+	KeyMap* map = kbd->mappings[kbd->state];
+	dmaCopy(map->mapDataReleased, bgGetMapPtr(kbd->background),
+			map->width * map->height * kbd->grid_height * kbd->grid_width / 64 * 2);
 	keyboardShow();
 
-	dmaCopy(kbd->palette, BG_PALETTE, kbd->paletteLen);
 	bool redraw = true;
-	while (1) {
-		keyboardUpdate();
-		if (keysDown() & KEY_TOUCH) {
-			touchRead(&touch);
-
-			int key = keyboardGetKey(touch.px, touch.py);
-			if (key == DVK_ENTER) {
-				break;
-			} else {
-				if (key > 31 && key < 127) { //printable character
-					str[strL++] = (char)key;
-					str[strL] = '\0';
-
-				} else if (key == DVK_BACKSPACE) {
-					str[--strL] = '\0';
-				}
-				redraw = true;
-			}
+	while (true) {
+		int key = keyboardUpdate();
+		if (key == DVK_ENTER) {
+			break;
 		}
+
+		if (key > 31 && key < 127) { //printable character
+			str[strL++] = (char)key;
+			str[strL] = '\0';
+			redraw = true;
+		} else if (key == DVK_BACKSPACE && strL > 0) {
+			str[--strL] = '\0';
+			redraw = true;
+		}
+
 		if (redraw) {
 			text->ClearBuffer();
 			text->SetFontSize(16);
@@ -137,7 +138,16 @@ const char* TextField::GetText() {
 }
 
 void TextField::SetText(const char* text) {
-	if (string) free(string);
+	if (string) delete[] string;
 
-	string = (text ? strdup(text) : NULL);
+	int stringL = strlen(text);
+	if (limit >= 0) stringL = MIN(stringL, limit);
+
+	string = new char[stringL+1];
+	strncpy(string, text, stringL);
+	string[stringL] = '\0';
+}
+
+void TextField::SetLimit(int l) {
+	limit = l;
 }

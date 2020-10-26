@@ -6,7 +6,7 @@
  * Features: None
  */
 
-//#include "common.h"
+#include "common.h"
 #include <vector>
 
 enum XmlNodeType {

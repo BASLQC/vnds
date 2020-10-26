@@ -15,7 +15,7 @@ include $(DEVKITARM)/ds_rules
 # all directories are relative to this makefile
 #---------------------------------------------------------------------------------
 BUILD		:= build
-SOURCES		:= . tcommon tcommon/gui menu select download
+SOURCES		:= . tcommon tcommon/gui tcommon/parser menu select
 INCLUDES	:= include
 
 #---------------------------------------------------------------------------------
@@ -25,13 +25,16 @@ ARCH	:=	-marm -mthumb-interwork
 
 CFLAGS	:=	-g -Wall -O2 \
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-			-ffast-math --save-temps \
-			$(ARCH)
+			-ffast-math -save-temps \
+			$(ARCH) $(INCLUDE) -DARM9 \
+			-DVERSION_STRING="\"$(SHORTNAME) $(VERSION)\""
 
-CFLAGS += $(INCLUDE) -DARM9 -DVERSION_STRING="\"$(SHORTNAME) $(VERSION)\""
-#CFLAGS += -DDEBUG -DIMG_LOAD_PROFILE
-#CFLAGS += -DDEBUG 
-#CFLAGS += -DUSE_EFS
+#possible flags are: -DDEBUG -DIMG_LOAD_PROFILE -DEFS -DENABLE_WIFI
+CFLAGS	+=	-DEFS
+#CFLAGS	+=	-DDEBUG
+
+### [experimental options] ###
+#Currently no experimental options exist
 
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH) -march=armv5te -mtune=arm946e-s

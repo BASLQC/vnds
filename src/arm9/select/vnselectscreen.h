@@ -27,7 +27,6 @@ class VNSelectScreen : public Screen, public ButtonListener {
 		TextScrollPane* scrollPane;
 		Button* aboutButton;
 		Button* playButton;
-        Button* downloadButton;
 
 		u8 loadState;
 

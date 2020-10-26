@@ -17,20 +17,36 @@
 
 #define LOWC(x)         ((x)&31)
 
-u8 backlight = 0;
+u16 fifoCommandMode = 0;
+u8  backlight = 1;
 
-void FIFOBacklight(u32 value, void* userdata) {
-    //backlight += 1;
-    //backlight = value;
+void tcommonFIFOCallback(u32 value, void* userdata) {
+	switch (fifoCommandMode) {
+	case MSG_TOGGLE_BACKLIGHT:
+		backlight = value;
+		fifoCommandMode = 0;
+		break;
+	default:
+
+		switch (value) {
+		case MSG_TOGGLE_BACKLIGHT:
+			fifoCommandMode = value;
+			break;
+		default:
+			consoleDemoInit();
+			iprintf("Unknown FIFO Command: 0x%x (mode=%d)\n", value, fifoCommandMode);
+			waitForAnyKey();
+			fifoCommandMode = 0;
+		}
+	}
+
 }
 
 void toggleBacklight() {
 	//fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT); //--in libnds 1.3.1 you HAVE to check the return value or the command won't be sent (GCC is probably to blame)
-	/*if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT)) {
+	if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_TOGGLE_BACKLIGHT)) {
 		iprintf("Error sending backlight message to ARM7\n");
-	}*/
-    //fifoSendValue32(FIFO_AUDIO, backlight);
-    //backlight+=1;
+	}
 }
 
 u8 chartohex(char c) {
@@ -246,90 +262,6 @@ void unfadeBlack(u16 frames) {
     videoSetModeSub(oldModeSub);
 }
 
-bool loadImage(const char* file, u16* out, u8* outA, u16 w, u16 h, int format) {
-    if (format == 0) {
-        char path[MAXPATHLEN];
-    	sprintf(path, "%s.png", file);
-
-        FILE* file = fopen(path, "rb");
-        if (file) {
-            fseek(file, 0, SEEK_END);
-            int dataL = ftell(file);
-            fseek(file, 0, SEEK_SET);
-			char* data = new char[dataL];
-
-			fread(data, sizeof(char), dataL, file);
-			bool result = pngLoadImage(data, dataL, out, outA, w, h);
-
-			delete[] data;
-			fclose(file);
-			return result;
-        }
-        return false;
-    }
-
-    char dtaPath[MAXPATHLEN];
-    sprintf(dtaPath, "%s.dta", file);
-    char palPath[MAXPATHLEN];
-    sprintf(palPath, "%s.pal", file);
-
-    FileHandle* fhDTA = fhOpen(dtaPath);
-    if (!fhDTA) return false;
-
-    FileHandle* fhPAL = NULL;
-    u16* pal = NULL;
-    if (format != GL_RGBA) {
-        fhPAL = fhOpen(palPath);
-        if (!fhPAL) {
-            fhClose(fhDTA);
-            return false;
-        }
-        pal = new u16[fhPAL->length/sizeof(u16)];
-        fhReadFully(pal, fhPAL);
-    }
-
-    u8* dta = new u8[fhDTA->length];
-    fhReadFully(dta, fhDTA);
-
-    if (format == GL_RGB32_A3) {
-        for (u32 n = 0; n < fhDTA->length; n++) {
-            out[n] = pal[dta[n] & 31];
-            if (outA) {
-                outA[n] = (dta[n]&0xE0) + 16;
-                if (outA[n] >= 255-16) outA[n] = 255;
-                if (outA[n] <= 16) outA[n] = 0;
-            }
-        }
-    } else if (format == GL_RGB8_A5) {
-        for (u32 n = 0; n < fhDTA->length; n++) {
-            out[n] = pal[dta[n] & 7];
-            if (outA) {
-                outA[n] = (dta[n]&0xF8) + 4;
-                if (outA[n] >= 255-4) outA[n] = 255;
-                if (outA[n] <= 4) outA[n] = 0;
-            }
-        }
-    } else if (format == GL_RGB256) {
-        for (u32 n = 0; n < fhDTA->length; n++) {
-            out[n] = pal[dta[n]]|BIT(15);
-            if (outA) outA[n] = (out[n]|BIT(15) ? 255 : 0);
-        }
-    } else if (format == GL_RGBA) {
-        for (u32 n = 0; n < fhDTA->length; n++) {
-            out[n>>1] = (dta[n+1]<<8)|(dta[n]);
-            n++;
-            if (outA) outA[n] = (out[n]|BIT(15) ? 255 : 0);
-        }
-    }
-
-    if (fhDTA) fhClose(fhDTA);
-    if (dta) delete[] dta;
-    if (fhPAL) fhClose(fhPAL);
-    if (pal) delete[] pal;
-
-    return true;
-}
-
 void darken(u16* screen, u8 factor, s16 x, s16 y, s16 w, s16 h) {
     int t = y * 256;
     for (int v = y; v < y+h; v++) {
@@ -479,15 +411,4 @@ void waitForCapture() {
 	while (REG_DISPCAPCNT & DCAP_ENABLE) {
 		swiWaitForVBlank();
 	}
-}
-
-char* basename(char* path)
-{
-    int len = strlen(path);
-    int sindex;
-    for(int i = 0; i < len; ++i) {
-        if (path[i] == '/')
-            sindex = i;
-    }
-    return path+sindex+1;
 }

@@ -8,6 +8,7 @@
 class TextField : public Widget {
 	private:
 		char* string;
+		int limit;
 		u8 fontsize;
 		Text* text;
 
@@ -21,6 +22,7 @@ class TextField : public Widget {
 		const char* GetText();
 
 		virtual void SetText(const char* text);
+		virtual void SetLimit(int l);
 };
 
 #endif

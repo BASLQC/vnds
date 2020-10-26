@@ -5,7 +5,7 @@
 #include "gui_types.h"
 
 #define DEFAULT_VIDEO_MODE (MODE_5_3D|DISPLAY_BG3_ACTIVE|DISPLAY_SPR_ACTIVE|DISPLAY_SPR_2D_BMP_256)
-#define BASE_POLY_FMT (POLY_FORMAT_LIGHT0|POLY_CULL_NONE)
+#define BASE_POLY_FMT (POLY_CULL_NONE|POLY_FORMAT_LIGHT0)
 #define DEFAULT_POLY_FMT (BASE_POLY_FMT|POLY_ALPHA(31))
 #define SCREEN_HISTORY_MAXSIZE 8
 
@@ -31,6 +31,7 @@ class GUI {
 		u16* main_bg;
         u16* sub_bg;
         int bg2, bg3;
+        TextureManager texmgr;
         SpriteEntry mainSprites[SPRITE_COUNT];
         SpriteEntry subSprites[SPRITE_COUNT];
 

@@ -9,7 +9,6 @@ Widget::Widget(Screen* s) : screen(s) {
 
 	background = NULL;
 	image = NULL;
-	texture = &s->texture;
 
 	screen->AddWidget(this);
 }
@@ -22,6 +21,8 @@ Widget::~Widget() {
 
 //Functions
 void Widget::Activate() {
+	texture = screen->texture;
+
 	OnActivated();
 }
 void Widget::OnActivated() {
@@ -154,7 +155,7 @@ void Widget::SetBackgroundDirty(bool v) {
 	backgroundDirty = v;
 }
 void Widget::SetForegroundImage(Rect uv) {
-	this->texture = &screen->texture;
+	this->texture = screen->texture;
 	this->textureUV = uv;
 }
 void Widget::SetBackgroundImage(u16* img, u16 iw, u16 ih, s16 iu, s16 iv) {

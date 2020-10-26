@@ -8,19 +8,16 @@
 #include "vnds_types.h"
 #include "vnds.h"
 #include "select/vnselect.h"
-#include "download/vndownload.h"
 #include "tcommon/text.h"
 #include "tcommon/xml_parser.h"
 
-#ifdef USE_EFS
+#ifdef EFS
 #include "efs_lib.h"
 #endif
 
 void epicFail() {
-    videoSetMode(MODE_0_2D);
-    videoSetModeSub(MODE_0_2D);
-
-    consoleDemoInit();
+	lcdMainOnBottom();
+	consoleDemoInit();
 
     printf("\x1b[0;0H");
     BG_PALETTE_SUB[0]   = RGB15( 0,  0, 31) | BIT(15);
@@ -86,33 +83,34 @@ void checkInstall() {
 	}
 }
 
-inline u32 readFIFO() {
-    while (REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY);
-    return REG_IPC_FIFO_RX;
-}
-
 int main(int argc, char** argv) {
 	powerOn(POWER_ALL);
     defaultExceptionHandler();
 
-    fifoSetValue32Handler(FIFO_BACKLIGHT, &FIFOBacklight, NULL);
+    for (int n = 0; n < 20; n++) {
+    	//Wait for ARM7 init
+    	swiWaitForVBlank();
+    }
+
+    if (!fifoSetValue32Handler(TCOMMON_FIFO_CHANNEL_ARM9, &tcommonFIFOCallback, NULL)) {
+    	return 1; //Fatal Error
+    }
 
     //Init filesystem
-	//NOTE: EFS started misbehaving when the .nds grew to over 32MB
-    #ifdef USE_EFS
-    if (!EFS_Init(EFS_AND_FAT|EFS_DEFAULT_DEVICE, NULL)) {
-    #endif
-        //If that fails, init regular FAT
-        if (!fatInitDefault()) {
-            libfatFail();
-            return 1;
-        }
+    if (!fatInitDefault()) {
+    	#ifdef EFS
+			if (!EFS_Init(EFS_AND_FAT|EFS_DEFAULT_DEVICE, NULL)) {
+		#endif
+		        libfatFail();
+		        return 1;
+		#ifdef EFS
+			}
+		#endif
+    } else {
         chdir("/vnds");
-    #ifdef USE_EFS
     }
-    #endif
 
-    //Check installation
+    //Check install
     checkInstall();
 
     //Init default font
@@ -127,8 +125,6 @@ int main(int argc, char** argv) {
 	AS_Init(AS_MODE_MP3, 24*1024);
     AS_SetDefaultSettings(AS_ADPCM, 22050, 0);
 
-    Wifi_InitDefault(INIT_ONLY);
-
     //Create log
     vnInitLog(0);
 
@@ -142,16 +138,6 @@ int main(int argc, char** argv) {
 
 		VNSelect* vnselect = new VNSelect();
 		vnselect->Run();
-        if (vnselect->selectedNovelInfo == NULL) {
-            delete vnselect;
-            
-            VNDownload* vndownload = new VNDownload();
-            vndownload->Run();
-            delete vndownload;
-            
-            continue;
-        }
-        
 		memcpy(selectedNovelInfo, vnselect->selectedNovelInfo, sizeof(NovelInfo));
 		delete vnselect;
 
@@ -161,9 +147,9 @@ int main(int argc, char** argv) {
 			skin->Load(path);
 		}
 
-        VNDS* vnds = new VNDS(selectedNovelInfo);
-        vnds->Run();
-        delete vnds;
+		VNDS* vnds = new VNDS(selectedNovelInfo);
+		vnds->Run();
+		delete vnds;
 	}
 	delete selectedNovelInfo;
 

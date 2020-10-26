@@ -2,7 +2,7 @@
 
 #include "vnselect.h"
 #include "vnaboutscreen.h"
-#include "ini_parser.h"
+#include "../tcommon/parser/ini_parser.h"
 #include "../tcommon/gui/gui_common.h"
 
 VNSelectScrollPane::VNSelectScrollPane(VNSelectScreen* s, Rect upImg, Rect downImg, Rect barImg, FontCache* fc)
@@ -58,23 +58,16 @@ VNSelectScreen::VNSelectScreen(GUI* gui, VNSelect* vns, u16* tex, u16* bg) : Scr
 
 	aboutButton = new Button(this);
 	aboutButton->SetButtonListener(this);
-	aboutButton->SetBounds(0, 160, 85, 32);
-	aboutButton->SetForegroundImage(Rect(0, 64, 85, 32));
-	aboutButton->SetPressedImage(Rect(0, 96, 85, 32));
+	aboutButton->SetBounds(16, 160, 96, 32);
+	aboutButton->SetForegroundImage(Rect(16, 64, 96, 32));
+	aboutButton->SetPressedImage(Rect(16, 96, 96, 32));
 
 	playButton = new Button(this);
 	playButton->SetButtonListener(this);
-	playButton->SetBounds(85, 160, 85, 32);
-	playButton->SetForegroundImage(Rect(85, 64, 85, 32));
-	playButton->SetPressedImage(Rect(85, 96, 85, 32));
+	playButton->SetBounds(144, 160, 96, 32);
+	playButton->SetForegroundImage(Rect(144, 64, 96, 32));
+	playButton->SetPressedImage(Rect(144, 96, 96, 32));
 	playButton->SetActivationKeys(KEY_A|KEY_START);
-    
-    downloadButton = new Button(this);
-	downloadButton->SetButtonListener(this);
-	downloadButton->SetBounds(170, 160, 86, 32);
-	downloadButton->SetForegroundImage(Rect(170, 64, 86, 32));
-	downloadButton->SetPressedImage(Rect(170, 96, 86, 32));
-    downloadButton->SetActivationKeys(KEY_X);
 }
 VNSelectScreen::~VNSelectScreen() {
     if (novelInfo) {
@@ -88,7 +81,7 @@ VNSelectScreen::~VNSelectScreen() {
 
 void VNSelectScreen::LoadNovels() {
     IniFile iniFile;
-    FileList folderList("novels");
+    FileList folderList("novels", NULL, false);
 
     if (novelInfo) {
     	for (int n = 0; n < novelInfoL; n++) {
@@ -102,35 +95,15 @@ void VNSelectScreen::LoadNovels() {
     int t = 0;
     char path[MAXPATHLEN];
     char* folderName;
-    bool isnvl = false;
-    IniRecord* r;
     while ((folderName = folderList.NextFile()) != NULL) {
     	novelInfo[t] = new NovelInfo();
-    
-        int lsuf = strlen(folderName)-6;
-        if (!strncmp(folderName +lsuf, ".novel", 6)) {
-            sprintf(path, "novels/%s", folderName);
-            novelInfo[t]->SetPath(path);
-            novelInfo[t]->SetNovelType(NOVELZIP);
-            
-            Archive* nvl = openZipFile(path, "", NULL);
-            FileHandle* inif = fhOpen(nvl, "info.txt");
-            if (inif == NULL) {
-                continue;
-            }
-            isnvl = iniFile.Load(inif);
-            fhClose(inif);
-            novelInfo[t]->SetArchive(nvl);
-        }
-        else {
-            sprintf(path, "novels/%s", folderName);
-            novelInfo[t]->SetPath(path);
-            novelInfo[t]->SetNovelType(FOLDER);
 
-            sprintf(path, "novels/%s/info.txt", folderName);
-            isnvl = iniFile.Load(path);
-        }
-        if (isnvl) {
+    	sprintf(path, "novels/%s", folderName);
+        novelInfo[t]->SetPath(path);
+
+        IniRecord* r;
+        sprintf(path, "novels/%s/info.txt", folderName);
+        if (iniFile.Load(path)) {
             r = iniFile.GetRecord("title");
             if (r) novelInfo[t]->SetTitle(r->AsString());
             r = iniFile.GetRecord("fontsize");
@@ -200,7 +173,7 @@ void VNSelectScreen::DrawTopScreen() {
 void VNSelectScreen::DrawForeground() {
 	Screen::DrawForeground();
 
-	drawQuad(&texture, inttof32(0), inttof32(160), VERTEX_SCALE(256), VERTEX_SCALE(32),
+	drawQuad(texture, inttof32(0), inttof32(160), VERTEX_SCALE(256), VERTEX_SCALE(32),
 			Rect(0, 64, 8, 32));
 }
 
@@ -210,9 +183,7 @@ void VNSelectScreen::OnButtonPressed(Button* button) {
 		gui->PushScreen(new VNAboutScreen(gui, textureImage));
 	} else if (button == playButton) {
 		vnselect->Play();
-	} else if (button == downloadButton) {
-        vnselect->Download();
-    }
+	}
 }
 
 int VNSelectScreen::GetSelectedIndex() {

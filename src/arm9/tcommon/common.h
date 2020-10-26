@@ -27,20 +27,20 @@ class Rect {
     public:
         int x, y, w, h;
 
-        Rect() {
-            x = y = w = h = 0;
+        Rect()
+			: x(0), y(0), w(0), h(0)
+        {
         }
-        Rect(int x, int y, int w, int h) {
-            this->x = x;
-            this->y = y;
-            this->w = w;
-            this->h = h;
+        Rect(int rx, int ry, int rw, int rh)
+			: x(rx), y(ry), w(rw), h(rh)
+        {
+
         }
 };
 
 extern u8 backlight;
 
-void FIFOBacklight(u32 value, void* userdata);
+void tcommonFIFOCallback(u32 value, void* userdata);
 void toggleBacklight();
 
 u8 chartohex(char c);
@@ -86,10 +86,10 @@ bool mkdirs(const char* filename);
 bool fexists(const char* filename);
 void setupCapture(int bank);
 void waitForCapture();
-char* basename(char*);
 
 #include "gui/gui_types.h"
-#include "util_3d.h"
+#include "util3d.h"
+#include "textures.h"
 
 //Forward decls
 class Archive;

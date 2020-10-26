@@ -39,37 +39,65 @@ void Screen::RemoveWidget(Widget* w) {
 	}
 }
 
+int Screen::ListWidgets(Widget** out) {
+	int t = 0;
+	list<Widget*>::iterator i = widgets.begin();
+	while (i != widgets.end()) {
+		out[t++] = *i;
+		++i;
+	}
+	return t;
+}
+
+int Screen::ListWidgetsReverse(Widget** out) {
+	int t = 0;
+	list<Widget*>::reverse_iterator i = widgets.rbegin();
+	while (i != widgets.rend()) {
+		out[t++] = *i;
+		++i;
+	}
+	return t;
+}
+
 void Screen::Activate() {
 	active = true;
 
 	SetTexture(textureImage);
 
-	list<Widget*>::reverse_iterator i;
-	for (i = widgets.rbegin(); i != widgets.rend(); i++) {
-		(*i)->Activate();
+	Widget* ws[widgets.size()];
+	int t = ListWidgetsReverse(ws);
+	for (int n = 0; n < t; n++) {
+		Widget* w = ws[n];
+		w->Activate();
 	}
 
 	SetBackgroundDirty();
 }
 void Screen::Deactivate() {
-	list<Widget*>::reverse_iterator i;
-	for (i = widgets.rbegin(); i != widgets.rend(); i++) {
-		(*i)->FlushChanges();
+	Widget* ws[widgets.size()];
+	int t = ListWidgetsReverse(ws);
+	for (int n = 0; n < t; n++) {
+		Widget* w = ws[n];
+		w->FlushChanges();
 	}
 
 	//texture.id = -1;
 	active = false;
 }
 void Screen::Cancel() {
-	list<Widget*>::reverse_iterator i;
-	for (i = widgets.rbegin(); i != widgets.rend(); i++) {
-		(*i)->Cancel();
+	Widget* ws[widgets.size()];
+	int t = ListWidgetsReverse(ws);
+	for (int n = 0; n < t; n++) {
+		Widget* w = ws[n];
+		w->Cancel();
 	}
 }
 void Screen::Update(u32& keysDown, u32& keysHeld, touchPosition touch) {
-	list<Widget*>::reverse_iterator i;
-	for (i = widgets.rbegin(); i != widgets.rend(); i++) {
-		Widget* w = *i;
+	Widget* ws[widgets.size()];
+	int t = ListWidgetsReverse(ws);
+
+	for (int n = 0; n < t; n++) {
+		Widget* w = ws[n];
 		if (w->IsVisible()) {
 			w->Update(keysDown, keysHeld, touch);
 		}
@@ -87,11 +115,12 @@ void Screen::DrawBackground() {
 void Screen::DrawForeground() {
 }
 bool Screen::Draw() {
-	list<Widget*>::iterator i;
+	Widget* widgets[widgets.size()];
+	int t = ListWidgets(widgets);
 
 	bool bgChanged = backgroundDirty;
-	for (i = widgets.begin(); i != widgets.end(); i++) {
-		Widget* w = *i;
+	for (int n = 0; n < t; n++) {
+		Widget* w = widgets[n];
 		if (!w->IsTransparent() && w->IsVisible() && w->IsBackgroundDirty()) {
 			bgChanged = true;
 		}
@@ -100,8 +129,8 @@ bool Screen::Draw() {
 		DrawBackground();
 	}
 	if (bgChanged) {
-		for (i = widgets.begin(); i != widgets.end(); i++) {
-			Widget* w = *i;
+		for (int n = 0; n < t; n++) {
+			Widget* w = widgets[n];
 			if (!w->IsTransparent() && w->IsVisible()) {
 				if (backgroundDirty || w->IsBackgroundDirty()) {
 					w->SetBackgroundDirty(false);
@@ -115,14 +144,12 @@ bool Screen::Draw() {
 		bgChanged = true;
 	}
 
-	int t = 0;
-	for (i = widgets.begin(); i != widgets.end(); i++) {
-		Widget* w = *i;
+	for (int n = 0; n < t; n++) {
+		Widget* w = widgets[n];
 		if (w->IsVisible()) {
 			glPolyFmt(DEFAULT_POLY_FMT | POLY_ID(t&31));
 			w->DrawForeground();
 		}
-		t++;
 	}
 	DrawForeground();
 
@@ -144,24 +171,13 @@ void Screen::SetTexture(u16* texImg) {
 	textureImage = texImg;
 
 	if (active && texImg) {
-		//Generate Texture
-		glResetTextures();
+		TextureManager* texmgr = &gui->texmgr;
+		texmgr->Reset();
+		texture = texmgr->AddTexture(TEXTURE_SIZE_256, TEXTURE_SIZE_256, GL_RGBA,
+			(GL_TEXTURE_PARAM_ENUM)(TEXGEN_TEXCOORD|GL_TEXTURE_WRAP_S|GL_TEXTURE_WRAP_T),
+			textureImage, 256*256*sizeof(u16), NULL, 0);
 
-		int ids[1];
-		glGenTextures(1, ids);
-		memset(&texture, 0, sizeof(TextureData));
-		texture.id = ids[0];
+		//iprintf("%08x\n", texture);
 
-		//Load texture
-		glBindTexture(0, texture.id);
-		texture.format = GL_RGBA;
-		texture.size = 256*256*2;
-
-	    vramSetBankA(VRAM_A_LCD);
-		dmaCopy(textureImage, VRAM_A, texture.size);
-		glTexParameter(TEXTURE_SIZE_256, TEXTURE_SIZE_256, (u32*)VRAM_A, GL_RGBA,
-				(GL_TEXTURE_PARAM_ENUM)(TEXGEN_TEXCOORD|GL_TEXTURE_WRAP_S|GL_TEXTURE_WRAP_T));
-
-	    vramSetBankA(VRAM_A_TEXTURE);
 	}
 }

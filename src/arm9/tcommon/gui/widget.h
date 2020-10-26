@@ -19,7 +19,7 @@ class Widget {
 		u16 imageW, imageH;
 		s16 imageU, imageV;
 
-		TextureData* texture;
+		Texture* texture;
 		Rect textureUV; //Texture rect for the foreground image
 		s32 vw, vh;
 

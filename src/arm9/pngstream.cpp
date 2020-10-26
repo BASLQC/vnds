@@ -67,6 +67,7 @@ bool PNGStream::Start(Archive* archive, const char* name) {
 	dstA = alpha;
 	file = fhOpen(archive, name, false);
 	if (!file) {
+		error = true;
 		return false;
 	}
 
@@ -97,7 +98,7 @@ bool PNGStream::Start(Archive* archive, const char* name) {
 	}
 
 	if (setjmp(png_jmpbuf(png_ptr))) { //Exception handler, see libpng manual
-		png_read_end(png_ptr, end_ptr);
+		//png_read_end(png_ptr, end_ptr);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
 		png_ptr = NULL;
 

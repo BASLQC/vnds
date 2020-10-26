@@ -21,7 +21,7 @@ void errorCallback(png_structp png_ptr, png_const_charp error_msg) {
 	longjmp(png_ptr->jmpbuf, 1);
 }
 void warningCallback(png_structp png_ptr, png_const_charp warning_msg) {
-	fprintf(stderr, "%s\n", warning_msg);
+	//fprintf(stderr, "%s\n", warning_msg);
 }
 
 void (*pngErrorCallback) (png_structp png_ptr, png_const_charp error_msg) = &errorCallback;

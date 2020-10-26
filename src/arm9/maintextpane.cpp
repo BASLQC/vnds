@@ -21,14 +21,14 @@ MainTextPane::~MainTextPane() {
 }
 
 void MainTextPane::Update(u32& down, u32& held, touchPosition touch) {
-	TextScrollPane::Update(down, held, touch);
+	VNTextScrollPane::Update(down, held, touch);
 
 	if (textSpeed > 0) {
 		int strL = lineStarts[lineStartsL] - lineStarts[currentChunkStart];
 		if (activeVisibleChars < strL) {
 			for (int n = currentChunkStart; n < GetNumberOfItems(); n++) {
 				int offset = activeVisibleChars+lineStarts[currentChunkStart];
-				if (offset-lineStarts[n] > 0 && offset-lineStarts[n+1] <= 0) {
+				if (offset-lineStarts[n] >= 0 && offset-lineStarts[n+1] <= 0) {
 					SetItemDirty(n);
 				}
 			}
@@ -59,7 +59,6 @@ bool MainTextPane::AppendText(const char* text, u16 color, bool stripSpaces) {
 	}
 
 	activeVisibleChars = (textSpeed > 0 ? 0 : -1);
-
 	return true;
 }
 
@@ -76,7 +75,7 @@ void MainTextPane::DrawListItemBackground(s16 index, u16* buffer, u16 w, u16 h, 
 		}
 	}
 
-	TextScrollPane::DrawListItemBackground(index, buffer, w, h, selected);
+	VNTextScrollPane::DrawListItemBackground(index, buffer, w, h, selected);
 
 	colors[index] = oldColor;
 	text->SetVisibleChars(-1);

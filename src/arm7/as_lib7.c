@@ -413,12 +413,12 @@ void AS_InitMP3() {
 }
 
 void AS_Init(IPC_SoundSystem* ipc) {
-    ipcSound = ipc;
-	REG_MASTER_VOLUME = SOUND_VOL(127);
+	REG_MASTER_VOLUME = SOUND_VOL(ipc->volume = 127);
+
     ipc->chan[0].cmd |= SNDCMD_ARM7READY;
     //while (ipc->chan[0].cmd & SNDCMD_ARM7READY);
 
-    //ipcSound = ipc;
+    ipcSound = ipc;
 }
 
 // desinterleave a stereo source (thanks to Thoduv for the code)

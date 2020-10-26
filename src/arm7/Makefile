@@ -18,14 +18,14 @@ BUILD		:=	build
 SOURCES		:=	. helix helix/real
 INCLUDES	:=	include build . helix
 DATA		:=
- 
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb-interwork
 
 CFLAGS	:=	-g -Wall -Os \
-		-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
+		-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer \
 		-ffast-math \
 		$(ARCH)
 
@@ -47,8 +47,7 @@ LIBS	:=	-lnds7 -ldswifi7
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(LIBNDS)
- 
-  
+
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions

@@ -8,7 +8,6 @@ SoundEngine::SoundEngine(Archive* soundArchive) {
 	this->soundArchive = soundArchive;
 
 	mute = false;
-	AS_SetMasterVolume(127);
 
 	musicPath[0] = '\0';
 
@@ -22,8 +21,6 @@ SoundEngine::SoundEngine(Archive* soundArchive) {
 SoundEngine::~SoundEngine() {
 	StopMusic();
 	StopSound();
-
-	AS_SetMasterVolume(127);
 }
 
 void SoundEngine::Reset() {

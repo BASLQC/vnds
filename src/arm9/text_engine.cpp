@@ -163,11 +163,11 @@ void TextEngine::Update(u32& down, u32& held, touchPosition touch) {
 		textPane->SetVisible(false);
 	}
 
-	if (textPane->GetScroll() >= textPane->GetNumberOfItems() - textPane->GetVisibleItems()) {
-		if ((down & KEY_TOUCH) && vnds->IsWaitingForInput()) {
-			vnds->Continue(false);
-		}
-	}
+	///if (textPane->GetScroll() >= textPane->GetNumberOfItems() - textPane->GetVisibleItems()) {
+	//	if ((down & KEY_TOUCH) && vnds->IsWaitingForInput()) {
+	//		vnds->Continue();
+	//	}
+	//}
 
 	if ((frame & 511) == 0) {
 		RepaintTime();
@@ -216,9 +216,9 @@ void TextEngine::DrawWaitingIcon(u32 frame) {
 
 	glPolyFmt(BASE_POLY_FMT | POLY_ID(32) | POLY_ALPHA(31));
 	glTranslate3f32(0, 0, 5);
-	drawQuad(&texture, inttof32(0), inttof32(176), vw, vh,
+	drawQuad(texture, inttof32(0), inttof32(176), vw, vh,
 			Rect(32 + 16 * (a&1) + (s > 0 ? 0 : -s-1),
-					32 + 16 * ((a&3)>>1) + (s > 0 ? 0 : -s-1), s, s));
+					32 + 16 * ((a&3)>>1) + (s > 0 ? 0 : -s), s, s));
 	glTranslate3f32(0, 0, -5);
 	glPolyFmt(DEFAULT_POLY_FMT);
 }
@@ -243,7 +243,7 @@ void TextEngine::DrawForeground() {
 		if (alpha > 0) {
 			glPolyFmt(BASE_POLY_FMT | POLY_ID(32) | POLY_ALPHA(1 + alpha));
 			glTranslate3f32(0, 0, 5);
-			drawQuad(&texture, inttof32(0), inttof32(176), vw, vh, Rect(16, 48, 16, 16));
+			drawQuad(texture, inttof32(0), inttof32(176), vw, vh, Rect(16, 48, 16, 16));
 			glTranslate3f32(0, 0, -5);
 			glPolyFmt(DEFAULT_POLY_FMT);
 		}
@@ -260,11 +260,11 @@ void TextEngine::DrawForeground() {
 
 	vw = VERTEX_SCALE(88);
 	vh = VERTEX_SCALE(16);
-	drawQuad(&texture, inttof32(256-88), inttof32(192-16), vw, vh, Rect(64, 32, 88, 16));
+	drawQuad(texture, inttof32(256-88), inttof32(192-16), vw, vh, Rect(64, 32, 88, 16));
 
 	vw = VERTEX_SCALE(256);
 	vh = VERTEX_SCALE(16);
-	drawQuad(&texture, 0, inttof32(176), vw, vh, Rect(225, 0, 16, 16));
+	drawQuad(texture, 0, inttof32(176), vw, vh, Rect(225, 0, 16, 16));
 
 	Screen::DrawForeground();
 }

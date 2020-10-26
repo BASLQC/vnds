@@ -1,3 +1,16 @@
+* 1.4.9 13/01/10
+	anoNL:
+		* png error handling (ignore spurious warnings/crash on invalid png)
+		* "text ~" inserts blank lines again
+
+* 1.4.8 21/10/09
+    anoNL:
+    	* backported new functions up to 1.5.3 (excluding wifi + .novel fmt)
+        * added support for unpacking .novel files to NovelManager
+        * ansi color code support in the text renderer
+        * increased sprite limit from 4 to 9
+        * waking up from sleep mode was glitchy
+
 * 1.5.3 22/06/09
     Jake:
         * fixed bug with undefined variables in conditionals
@@ -18,7 +31,6 @@
         * download novels directly onto ds
         * redid FIFO stuff
         * 'if var == 0' works with unset variables again
-        
     Dilt:
         * cleartext command
 

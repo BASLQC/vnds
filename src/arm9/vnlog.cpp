@@ -89,7 +89,7 @@ void pngErr(png_structp png_ptr, png_const_charp error_msg) {
 	longjmp(png_ptr->jmpbuf, 1);
 }
 void pngWarn(png_structp png_ptr, png_const_charp warning_msg) {
-	vnLog(EL_warning, COM_GRAPHICS, "libpng_warn: %s", warning_msg);
+	//vnLog(EL_warning, COM_GRAPHICS, "libpng_warn: %s", warning_msg);
 }
 
 void vnInitLog(int logSize) {

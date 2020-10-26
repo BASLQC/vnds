@@ -44,14 +44,7 @@ VNDS::VNDS(NovelInfo* novelInfo) {
     delete[] textureI;
 
     //Start
-    noveltype = novelInfo->GetNovelType();
-    strcpy(nvltitle, novelInfo->GetTitle());
-    if (noveltype == FOLDER)
-        chdir(novelInfo->GetPath());
-    else
-        strcpy(nvlpath, novelInfo->GetPath());
-    
-        
+    chdir(novelInfo->GetPath());
 
     vnLog(EL_verbose, COM_CORE, "VNDS init ok");
 }
@@ -117,12 +110,6 @@ bool VNDS::IsWaitingForInput() {
 int VNDS::GetDelay() {
 	return delay;
 }
-NovelType VNDS::GetNovelType() {
-	return noveltype;
-}
-const char* VNDS::GetTitle() {
-	return nvltitle;
-}
 
 void VNDS::Update() {
 	if (gui->GetActiveScreen() != textEngine) {
@@ -132,8 +119,13 @@ void VNDS::Update() {
 	u32 down = keysDown();
 	u32 held = keysHeld();
 
+    u32 anyKey = KEY_A|KEY_B|KEY_X|KEY_Y|KEY_START|KEY_SELECT|KEY_L|KEY_R|KEY_TOUCH;
+
 	if (delay > 0) {
 		delay--;
+        if (down & anyKey) {
+            delay = 0;
+        }
 		Idle();
 	} else if (held & KEY_R) {
 		//R held
@@ -204,8 +196,7 @@ void VNDS::Update() {
 				Continue(held & KEY_Y);
 			} else {
 				if (!textEngine->GetTextPane()->IsFullTextDisplayed()) {
-					u32 keys = KEY_A|KEY_B|KEY_X|KEY_Y|KEY_START|KEY_SELECT|KEY_L|KEY_R|KEY_TOUCH;
-					if ((down & keys) || (held & KEY_Y)) {
+					if ((down & anyKey) || (held & KEY_Y)) {
 						textEngine->GetTextPane()->DisplayFullText();
 					}
 				} else if ((down & (KEY_A|KEY_B)) || (held & KEY_Y)) {
@@ -273,25 +264,14 @@ void VNDS::Run() {
 	//Open archives
     consoleClear();
     zipError = false;
-    
-    if (noveltype == NOVELZIP) {
-        /*foregroundArchive = openZipFile(nvlpath, "foreground/", &onZipProgress);
-        backgroundArchive = openZipFile(nvlpath, "background/", &onZipProgress);
-        scriptArchive = openZipFile(nvlpath, "script/", &onZipProgress);
-        soundArchive = openZipFile(nvlpath, "sound/", &onZipProgress);*/
-        foregroundArchive = backgroundArchive = scriptArchive = soundArchive = 
-            openZipFile(nvlpath, "", &onZipProgress);
-    }
-    else {
-        foregroundArchive = openArchive("foreground", "foreground/", &onZipProgress);
-        backgroundArchive = openArchive("background", "background/", &onZipProgress);
-        scriptArchive = openArchive("script", "script/", &onZipProgress);
-        soundArchive = openArchive("sound", "sound/", &onZipProgress);
-    }
-    if (zipError) {
-        resetVideo();
-        return;
-    }
+    foregroundArchive = openArchive("foreground", "foreground/", &onZipProgress);
+    if (!zipError) {
+    backgroundArchive = openArchive("background", "background/", &onZipProgress);
+    if (!zipError) {
+    scriptArchive = openArchive("script", "script/", &onZipProgress);
+    if (!zipError) {
+    soundArchive = openArchive("sound", "sound/", &onZipProgress);
+    if (!zipError) {
     consoleClear();
 
     //Load font
@@ -312,6 +292,8 @@ void VNDS::Run() {
 
     soundEngine = new SoundEngine(soundArchive);
 	pngStream = new PNGStream(soundEngine);
+
+	textEngine->Activate();
 
     //Main loop
 	while (!quit) {
@@ -341,20 +323,19 @@ void VNDS::Run() {
 	pngStream = NULL;
 
 	//Close ZIP archives
-    if (noveltype == NOVELZIP) { // close one = close all
-        closeArchive(soundArchive);
-    }
-    else {
-	    closeArchive(soundArchive);
-        closeArchive(scriptArchive);
-        closeArchive(backgroundArchive);
-        closeArchive(foregroundArchive);
-    }
+	closeArchive(soundArchive);
 	soundArchive = NULL;
+	}
+	closeArchive(scriptArchive);
 	scriptArchive = NULL;
+	}
+	closeArchive(backgroundArchive);
 	backgroundArchive = NULL;
+	}
+	closeArchive(foregroundArchive);
 	foregroundArchive = NULL;
-    
+	}
+
 	resetVideo();
 }
 

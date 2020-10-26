@@ -35,7 +35,7 @@ void ScriptInterpreter::Execute(Command* command, bool quickread) {
     case LABEL:     cmd_label(command, quickread);      return;
     case GOTO:      cmd_goto(command, quickread);       return;
     case CLEARTEXT: cmd_cleartext(command, quickread);  return;
-	case ENDSCRIPT: cmd_endscript(command, quickread);  return;
+    case ENDSCRIPT: cmd_endscript(command, quickread);  return;
 
 	case END_OF_FILE: cmd_eof(command, quickread);		return;
 	}
@@ -49,6 +49,7 @@ void ScriptInterpreter::cmd_text(Command* cmd, bool quickread, bool skipread) {
 	char firstChar = cmd->text.text[0];
 	if (firstChar == '~') {
 		vnds->textEngine->GetTextPane()->AppendText("");
+		vnds->SetWaitForInput(false);
 	} else if (firstChar == '!') {
 		vnds->SetWaitForInput(true);
 	} else {

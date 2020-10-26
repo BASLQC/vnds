@@ -79,27 +79,17 @@ VNSaveMenu::~VNSaveMenu() {
 void VNSaveMenu::Activate() {
 	Screen::Activate();
 
-    if (vnds->GetNovelType() == NOVELZIP) {
-        skinLoadImage("%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
-        skinLoadImage("%s/menu_bg", backgroundI, 256, 192);
-    }
-    else {
-        skinLoadImage("../../%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
-        skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
-    }
+    skinLoadImage("../../%s/savemenu_tex", savemenuTexI, SAVE_IMG_W, SAVE_IMG_H*2);
+    skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
 
-	int ids[1];
-	glGenTextures(1, ids);
-	memset(&texture2, 0, sizeof(TextureData));
-	texture2.id = ids[0];
-
-	//Load texture
-	glBindTexture(0, texture2.id);
-	texture2.format = GL_RGBA;
-	texture2.size = 256*256*2;
-	glTexParameter(TEXTURE_SIZE_256, TEXTURE_SIZE_256, (u32*)VRAM_D, GL_RGBA,
-			(GL_TEXTURE_PARAM_ENUM)(TEXGEN_TEXCOORD|GL_TEXTURE_WRAP_S|GL_TEXTURE_WRAP_T));
-
+	texture2.dataChunk.offset = (u32)VRAM_D;
+	texture2.dataChunk.length = 256 * 256 * sizeof(u16);
+	texture2.palChunk.offset = texture2.palChunk.length = 0;
+	texture2.sizeX = TEXTURE_SIZE_256;
+	texture2.sizeY = TEXTURE_SIZE_256;
+	texture2.addr = (texture2.dataChunk.offset >> 3) & 0xFFFF;
+	texture2.mode = GL_RGBA;
+	setTextureParam(&texture2, (TEXGEN_TEXCOORD|GL_TEXTURE_WRAP_S|GL_TEXTURE_WRAP_T));
 
     UpdateImages();
 }
@@ -217,10 +207,7 @@ void VNSaveMenu::UpdateImages() {
         slots[n].valid = true;
 
         //Read date from save file
-        if (vnds->GetNovelType() == NOVELZIP)
-            sprintf(path, "save/%s/save%.2d.sav", vnds->GetTitle(), n);
-        else
-            sprintf(path, "save/save%.2d.sav", n);
+        sprintf(path, "save/save%.2d.sav", n);
         if (!fexists(path)) {
         	slots[n].valid = false;
         	continue;
@@ -241,10 +228,7 @@ void VNSaveMenu::UpdateImages() {
         int dx = SAVE_IMG_W * (n % cols);
         int dy = SAVE_IMG_H * (n / cols);
 
-        if (vnds->GetNovelType() == NOVELZIP)
-            sprintf(path, "save/%s/save%.2d.img", vnds->GetTitle(), n);
-        else
-            sprintf(path, "save/save%.2d.img", n);
+        sprintf(path, "save/save%.2d.img", n);
         FILE* file = fopen(path, "rb");
         if (file) {
             fread(imgBuffer, sizeof(u16), SAVE_IMG_W * SAVE_IMG_H, file);

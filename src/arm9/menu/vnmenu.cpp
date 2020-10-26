@@ -77,27 +77,17 @@ VNMenu::~VNMenu() {
 void VNMenu::Activate() {
 	Screen::Activate();
 
-    if (vnds->GetNovelType() == NOVELZIP)
-        skinLoadImage("%s/menu_bg", backgroundI, 256, 192);
-    else
-	    skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
+	skinLoadImage("../../%s/menu_bg", backgroundI, 256, 192);
 }
 
 void VNMenu::OnButtonPressed(Button* button) {
-    char filen[128];
-    if (vnds->GetNovelType() == NOVELZIP)
-        strncpy(filen, "config.ini", 128);
-    else
-        strncpy(filen, "../../config.ini", 128);
-        
 	if (button == backButton) {
 		int ts = textSpeedSpinner->GetNumericValue();
 		if (ts <= 0) ts = -1;
 
 		preferences->SetFontSize(fontSizeSpinner->GetNumericValue(), vnds);
 		preferences->SetTextSpeed(ts, vnds);
-        
-		if (!preferences->Save(filen)) {
+		if (!preferences->Save("../../config.ini")) {
 			vnLog(EL_error, COM_CORE, "Error saving preferences");
 		}
 
@@ -110,7 +100,7 @@ void VNMenu::OnButtonPressed(Button* button) {
 	} else {
 		//OK button of confirmscreen has been pressed
 
-		if (!preferences->Save(filen)) {
+		if (!preferences->Save("../../config.ini")) {
 			vnLog(EL_error, COM_CORE, "Error saving preferences");
 		}
 

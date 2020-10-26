@@ -4,7 +4,7 @@
 #include "common.h"
 #include "tcommon/dsunzip.h"
 
-#define GE_MAX_SPRITES 4
+#define GE_MAX_SPRITES 9
 #define GE_MAX_CACHE_ENTRIES GE_MAX_SPRITES
 #define GE_MAX_HEAP_SIZE ((3072<<10) - (512<<10)) //Stop adding images if the heap size gets larger
 #define GE_FADE_FRAMES 16

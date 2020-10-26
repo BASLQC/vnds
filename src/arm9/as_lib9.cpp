@@ -56,23 +56,19 @@ void AS_Init(u8 mode, u32 mp3BufferSize) {
     as_default_rate = 22050;
     as_default_delay = AS_SURROUND;
 
-    //if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_INIT_SOUND_ARM7)
-    //		|| !fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, (u32)ipcSound)) //No SendAddress, ipcSound is outside main RAM
-    if (!fifoSendValue32(FIFO_AUDIO, (u32)ipcSound))
-    {
+    if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, MSG_INIT_SOUND_ARM7)) {
     	consoleDemoInit();
     	iprintf("Fatal error while initializing sound.\n");
     	waitForAnyKey();
     	return;
     }
 
-    // wait for the arm 7 to be ready
-    while( !(ipcSound->chan[0].cmd & SNDCMD_ARM7READY) ) {
-        swiWaitForVBlank();
-    }
+	//consoleDemoInit();
+	//iprintf("Waiting\n");
+	//iprintf("%d ", ipcSound->chan[0].cmd);
 
     // initialize channels
-    for(i = 0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
         ipcSound->chan[i].busy = false;
         ipcSound->chan[i].reserved = false;
         ipcSound->chan[i].volume = 0;
@@ -102,9 +98,8 @@ void AS_Init(u8 mode, u32 mp3BufferSize) {
     ipcSound->num_chan = nb_chan / 2;
 
     // use mp3
-    if(mode & AS_MODE_MP3) {
-
-        ipcSound->mp3.mixbuffer = (s8*)memalign(4, AS_AUDIOBUFFER_SIZE * 2);
+    if (mode & AS_MODE_MP3) {
+        ipcSound->mp3.mixbuffer = (s8*)((u32)memalign(4, AS_AUDIOBUFFER_SIZE * 2) | 0x400000);
         ipcSound->mp3.buffersize = AS_AUDIOBUFFER_SIZE / 2;
         ipcSound->mp3.channelL = 0;
         ipcSound->mp3.prevtimer = 0;
@@ -126,15 +121,31 @@ void AS_Init(u8 mode, u32 mp3BufferSize) {
 
         ipcSound->chan[ipcSound->mp3.channelL].snd.pan = 64;
         AS_SetMP3Volume(127);
-
-        // wait for the mp3 engine to be initialized
-        while (ipcSound->mp3.cmd & MP3CMD_INIT) {
-            swiWaitForVBlank();
-        }
     }
-
     AS_SetMasterVolume(127);
     DC_FlushRange(ipcSound, sizeof(IPC_SoundSystem));
+
+    if (!fifoSendValue32(TCOMMON_FIFO_CHANNEL_ARM7, (u32)ipcSound)) { //SendAddress doesn't work, ipcSound outside normal RAM
+    	consoleDemoInit();
+    	iprintf("Fatal error while initializing sound. (IPC_INIT)\n");
+    	waitForAnyKey();
+    	return;
+    }
+
+    //Wait for the arm 7 to be ready
+    while ((ipcSound->chan[0].cmd & SNDCMD_ARM7READY) == 0) {
+        DC_FlushRange(ipcSound, sizeof(IPC_SoundSystem));
+        swiWaitForVBlank();
+    }
+    if (mode & AS_MODE_MP3) {
+    	//Wait for MP3 Init
+		while (ipcSound->mp3.cmd & MP3CMD_INIT) {
+			DC_FlushRange(ipcSound, sizeof(IPC_SoundSystem));
+			swiWaitForVBlank();
+		}
+    }
+
+	//iprintf("Done Waiting\n");
 }
 
 // play a sound using the priority system
@@ -259,6 +270,7 @@ void AS_SoundDirectPlay(u8 chan, SoundInfo sound)
         // set the correct surround volume & pan
         AS_SetSoundVolume(chan, sound.volume);
     }
+    //DC_FlushRange(ipcSound->chan[chan], sizeof(SoundChannel));
 }
 
 // fill the given buffer with the required amount of mp3 data

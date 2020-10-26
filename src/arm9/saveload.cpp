@@ -9,29 +9,6 @@
 
 using namespace std;
 
-bool makeDir(VNDS* vnds) {
-    if (vnds->GetNovelType()) {
-        if (!mkdirs("save")) {
-            vnLog(EL_error, COM_CORE, "Error creating save folder");
-            return false;
-    	}
-        char path[128];
-        snprintf(path, 128, "save/%s", vnds->GetTitle());
-        if (!mkdirs(path)) {
-            vnLog(EL_error, COM_CORE, "Error creating save folder");
-            return false;
-    	}
-    }
-    else {
-        if (!mkdirs("save")) {
-            vnLog(EL_error, COM_CORE, "Error creating save folder");
-            return false;
-    	}
-    }
-    return true;
-}
-
-
 void loadVars(map<string, Variable>& varMap, XmlNode* varsE) {
     for (u32 n = 0; n < varsE->children.size(); n++) {
     	if (strcmp(varsE->children[n]->text, "var") != 0) {
@@ -96,10 +73,7 @@ void saveVars(FILE* file, map<string, Variable>& varMap, u8 indent) {
 
 bool loadState(VNDS* vnds, u16 slot) {
     char path[MAXPATHLEN];
-    if (vnds->GetNovelType() == NOVELZIP)
-        sprintf(path, "save/%s/save%.2d.sav", vnds->GetTitle(), slot);
-    else 
-        sprintf(path, "save/save%.2d.sav", slot);
+    sprintf(path, "save/save%.2d.sav", slot);
     if (!fexists(path)) {
     	vnLog(EL_error, COM_CORE, "Error loading savefile \"%s\". File not found.", path);
         return false;
@@ -185,10 +159,7 @@ bool saveXml(VNDS* vnds, u16 slot) {
     }
 
     //Open file
-    if (vnds->GetNovelType() == NOVELZIP)
-        sprintf(buffer, "save/%s/save%.2d.sav", vnds->GetTitle(), slot);
-    else 
-        sprintf(buffer, "save/save%.2d.sav", slot);
+    sprintf(buffer, "save/save%.2d.sav", slot);
     FILE* file = fopen(buffer, "wb");
     if (!file) {
 		vnLog(EL_error, COM_CORE, "Error opening file \"%s\" for saving", buffer);
@@ -240,10 +211,7 @@ bool saveXml(VNDS* vnds, u16 slot) {
 
 void saveImage(VNDS* vnds, u16 slot) {
 	char* path = new char[MAXPATHLEN];
-	if (vnds->GetNovelType() == NOVELZIP)
-        sprintf(path, "save/%s/save%.2d.img", vnds->GetTitle(), slot);
-    else 
-        sprintf(path, "save/save%.2d.img", slot);
+	sprintf(path, "save/save%.2d.img", slot);
 	FILE* file = fopen(path, "wb");
 	delete[] path;
 
@@ -288,8 +256,10 @@ void saveImage(VNDS* vnds, u16 slot) {
 }
 
 bool saveState(VNDS* vnds, u16 slot) {
-	if (!makeDir(vnds))
-        return false;
+	if (!mkdirs("save")) {
+		vnLog(EL_error, COM_CORE, "Error creating save folder");
+		return false;
+	}
 
 	if (!saveXml(vnds, slot)) {
 		vnLog(EL_error, COM_CORE, "Save failed");
@@ -301,11 +271,7 @@ bool saveState(VNDS* vnds, u16 slot) {
 }
 
 bool loadGlobal(VNDS* vnds) {
-    char path[128];
-    if (vnds->GetNovelType() == NOVELZIP)
-        sprintf(path, "save/%s/global.sav", vnds->GetTitle());
-    else 
-        sprintf(path, "save/global.sav");
+    const char* path = "save/global.sav";
     if (!fexists(path)) {
     	vnLog(EL_verbose, COM_CORE, "global.sav doesn't exist");
     	return true; //File not found is OK for global.sav
@@ -316,14 +282,12 @@ bool loadGlobal(VNDS* vnds) {
     return true;
 }
 bool saveGlobal(VNDS* vnds) {
-    if (!makeDir(vnds))
-        return false;
+    if (!mkdirs("save")) {
+		vnLog(EL_error, COM_CORE, "Error creating save folder");
+		return false;
+	}
 
-    char path[128];
-    if (vnds->GetNovelType() == NOVELZIP)
-        sprintf(path, "save/%s/global.sav", vnds->GetTitle());
-    else 
-        sprintf(path, "save/global.sav");
+    const char* path = "save/global.sav";
     FILE* file = fopen(path, "wb");
     if (!file) {
 		vnLog(EL_error, COM_CORE, "Error opening file \"%s\" for saving", path);

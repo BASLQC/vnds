@@ -4,7 +4,7 @@
 #include "sound_engine.h"
 #include "vnchoice.h"
 #include "maintextpane.h"
-#include "select/ini_parser.h"
+#include "tcommon/parser/ini_parser.h"
 
 char skinPath[128] = "skins/default";
 char baseSkinPath[128] = "skins/default";

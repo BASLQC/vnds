@@ -63,68 +63,94 @@ void TextScrollPane::DrawListItemForeground(s16 index, Rect r, bool selected) {
 	}
 }
 
-bool TextScrollPane::AppendText(const char* str, u16 color, bool stripSpaces) {
+TextScrollPane* printCallbackScrollPane;
+u16  printCallbackColor;
+int  printCallbackLine;
+bool printCallbackStripSpaces;
+bool printCallbackResult;
+
+void printCallback(const char* src) {
+	TextScrollPane* tp = printCallbackScrollPane;
+	if (!tp) {
+		printCallbackResult = false;
+	}
+	if (!printCallbackResult) {
+		return;
+	}
+
+	if (!tp->textWrapping && printCallbackLine > 0) {
+		return;
+	}
+
+	if (tp->lineStartsL >= tp->maxLineStartsL - 1) {
+		//No more room in lineStarts array, time to bail
+		printCallbackResult = false;
+		return;
+	}
+
+	int offset = tp->lineStarts[tp->lineStartsL];
+	int strL = strlen(src);
+	int copyL = MIN(strL, (tp->textBufferL-offset) - strL);
+	if (copyL < 0 || copyL < strL) {
+		printCallbackResult = false;
+		return;
+	}
+
+	char* dst = tp->textBuffer+offset;
+	if (printCallbackStripSpaces) {
+		//merge multiple spaces in a row into a single space
+		for (int c = 0; c < copyL; c++) {
+			if (*src != ' ' || c == 0 || dst[-1] != ' ') {
+				*dst = *src;
+				dst++;
+			}
+			src++;
+		}
+	} else {
+		strncpy(dst, src, copyL);
+		dst += copyL;
+	}
+	*dst = '\0';
+
+	tp->colors[tp->lineStartsL] = printCallbackColor;
+	tp->lineStartsL++;
+	tp->lineStarts[tp->lineStartsL] = offset + (dst - tp->textBuffer - offset) + 1;
+	printCallbackLine++;
+}
+
+bool TextScrollPane::AppendText(const char* str, u16 color, bool doLayout) {
 	if (color == 0) {
 		color = textColor;
 	}
-
-	text->GetStringLines(str);
-
-	u16* lineBreaks = text->lineBreaks;
-	int lineBreaksL = (textWrapping ? text->lineBreaksL : 1);
-
 	int oldLineStartsL = lineStartsL;
 
-	int lastStrOffset = 0;
-	for (int n = 0; n < lineBreaksL; n++) {
-		if (lineStartsL >= maxLineStartsL - 1) {
-			//No more room in lineStarts array, time to bail
-			lineStartsL = oldLineStartsL;
-			return false;
-		}
+	printCallbackScrollPane = this;
+	printCallbackColor = color|BIT(15);
+	printCallbackLine = 0;
+	printCallbackStripSpaces = doLayout;
+	printCallbackResult = true;
 
-		int offset = lineStarts[lineStartsL];
-		int strL = lineBreaks[n] - lastStrOffset;
-		int copyL = MIN(strL, (textBufferL-offset) - strL);
-		if (copyL <= 0 || copyL < strL) {
-			lineStartsL = oldLineStartsL;
-			return false;
-		}
-
-		const char* src = str+lastStrOffset;
-		char* dst = textBuffer+offset;
-
-		if (stripSpaces) {
-			//merge multiple spaces in a row into a single space
-			for (int c = 0; c < copyL; c++) {
-				if (*src != ' ' || c == 0 || dst[-1] != ' ') {
-					*dst = *src;
-					dst++;
-				}
-				src++;
-			}
-		} else {
-			strncpy(dst, src, copyL);
-			dst += copyL;
-		}
-		*dst = '\0';
-
-		colors[lineStartsL] = color|BIT(15);
-		lineStartsL++;
-		lineStarts[lineStartsL] = offset + (dst - textBuffer - offset) + 1;
-		lastStrOffset = lineBreaks[n];
+	if (doLayout) {
+		text->PrintString(str, &printCallback);
+	} else {
+		printCallback(str);
 	}
 
-	for (int n = 0; n < lineBreaksL; n++) {
-		SetItemDirty(oldLineStartsL+n);
+	if (!printCallbackResult) {
+		lineStartsL = oldLineStartsL;
+		return printCallbackResult;
+	}
+
+	for (int n = oldLineStartsL; n < lineStartsL; n++) {
+		SetItemDirty(n);
 	}
 	SetNumberOfItems(lineStartsL);
-
 	SetSelectedIndex(totalItemL-1);
 	SetScroll(MAX(0, totalItemL - visibleItemL));
 
-	return true;
+	return printCallbackResult;
 }
+
 void TextScrollPane::RemoveAllItems() {
 	lineStartsL = 0;
 

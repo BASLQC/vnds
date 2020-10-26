@@ -5,6 +5,15 @@
 
 #define INVISIBLE_CHAR(c) ((c)==' ' || (c)=='\t' || (c)=='\r')
 
+u16 ansiiPalette[] = {
+	//Regular colors
+	RGB15( 0, 0, 0), RGB15(15, 0, 0), RGB15( 0,15, 0), RGB15(15,15, 0),
+	RGB15( 0, 0,15), RGB15(15, 0,15), RGB15( 0,15,15), RGB15(24,24,24),
+	//Bright colors
+	RGB15(15,15,15), RGB15(31, 0, 0), RGB15( 0,31, 0), RGB15(31,31, 0),
+	RGB15( 0, 0,31), RGB15(31, 0,31), RGB15( 0,31,31), RGB15(31,31,31)
+};
+
 Text::Text(FontCache* fc) {
 	cache = fc;
 
@@ -39,35 +48,6 @@ void Text::PrintChar(u32 chr) {
         penX = tx;
         return;
     }
-
-    /*
-    u8* bitmap = sbit->buffer;
-    if (!bitmap) {
-        penX = tx;
-        return;
-    }
-
-    int maxX = bufferW - marginRight;
-    int maxY = bufferH - marginBottom;
-
-    u16 col = color | BIT(15);
-    int t = 0;
-    for (int y = 0; y < sbit->height; y++) {
-        for (int x = 0; x < sbit->width; x++) {
-            if (bitmap[t] >= ALPHA_THRESHOLD) {
-                int sy = penY + y - sbit->top;
-                int sx = penX + x + sbit->left;
-
-                if (sx >= marginLeft && sy >= marginTop && sx < maxX && sy < maxY) {
-                    int s = sy * bufferW + sx;
-                    bufferAlpha[s] = bitmap[t];
-                    buffer[s] = col;
-                }
-            }
-            t++;
-        }
-    }
-    */
 
     if (!sbit->buffer) {
         penX = tx;
@@ -112,11 +92,19 @@ void Text::PrintChar(u32 chr) {
 }
 
 void Text::PrintLine(const char* str) {
+	u16 lastColor = color;
+
     int t = 0;
     while (*str) {
     	if (visibleChars >= 0 && t >= visibleChars) {
     		break;
     	}
+
+		//Parse ANSI escape codes
+		while (*str == '\\' && (strncmp(str, "\\x1b[", 5) == 0 || strncmp(str, "\\x1B[", 5) == 0)) {
+			str += 5;
+    		str += ProcessEscapeCode(str, lastColor);
+		}
 
         u32 c = '?';
         int bytes = FontCache::GetCodePoint(str, &c);
@@ -132,6 +120,8 @@ void Text::PrintLine(const char* str) {
 		str += bytes;
 		t++;
     }
+
+    color = lastColor;
 }
 
 void Text::PushState() {
@@ -156,6 +146,7 @@ void Text::PushState() {
 
     statesL++;
 }
+
 void Text::PopState(u8 amount) {
     if (amount >= statesL) {
         statesL = 0;
@@ -202,7 +193,36 @@ void Text::ClearBuffer() {
     }
 }
 
-int Text::WrapString(const char* string, bool draw) {
+u8 Text::ProcessEscapeCode(const char* string, u16 defaultColor) {
+	int c = 39;
+	int brightness = 0;
+
+	char* end = strchr(string, 'm');
+	if (!end) {
+		return 0;
+	}
+
+	u32 len = (end - string);
+	if (len == 1 && string[0] == '0') {
+		//OK
+	} else {
+		if (EOF == siscanf(string, "%d;%d", &c, &brightness)) {
+			return 0;
+		}
+	}
+
+	//Only foreground color is supported
+	c -= 30;
+	if (c >= 0 && c <= 7 && brightness >= 0 && brightness <= 1) {
+		SetColor(ansiiPalette[8*brightness+c]);
+	} else if (brightness == 0 && c == 9) {
+		SetColor(defaultColor);
+	}
+
+	return (u8)(len + 1);
+}
+
+int Text::WrapString(const char* string, bool draw, void(*drawFunc)(const char*)) {
 	lineBreaksL = 0;
 
 	int from = 0;
@@ -216,6 +236,10 @@ int Text::WrapString(const char* string, bool draw) {
 
     if (maxWidth < spaceW) {
     	return lineBreaksL = 1;
+    } else if (from == 0 && to == 0) {
+        if (drawFunc) {
+        	drawFunc(string);
+        }
     }
 
 	bool panic = false;
@@ -225,9 +249,12 @@ int Text::WrapString(const char* string, bool draw) {
     int charCount = 0;
     int lineDrawEnd = 0;
 
+    u16 lastColor = color;
 	int lastPenX = penX;
     int lastPenY = penY;
 	int index = from;
+
+	char colorPrefix[16] = {'\0'};
 
     char tempString[to - from + 1];
     int tempIndex = 0;
@@ -268,6 +295,18 @@ int Text::WrapString(const char* string, bool draw) {
 	        		wordFits = false;
 	        		panic = false; //Word fits
 	        		break;
+	        	} else {
+	        		//Parse ANSI escape codes
+	        		if (string[index] == '\\' && (strncmp(string+index, "\\x1b[", 5) == 0
+	        					|| strncmp(string+index, "\\x1B[", 5) == 0))
+	        		{
+		        		int len = 5 + ProcessEscapeCode(string+index+5, lastColor);
+	        			strncpy(colorPrefix, string+index, len);
+	        			strcpy(tempString+tempIndex, colorPrefix);
+		            	index += len;
+		            	tempIndex += len;
+		        		continue;
+	        		}
 	        	}
 
                 u32 c = string[index];
@@ -326,7 +365,7 @@ int Text::WrapString(const char* string, bool draw) {
             //Word doesn't fit on the current line or the end of the string
             //has been reached
 
-        	if (lineDrawEnd <= 0 && !newlineEncountered) {
+        	if (lineDrawEnd < 0 && !newlineEncountered) {
         		break;
         	}
         	lineBreaks[line] = index;
@@ -336,6 +375,9 @@ int Text::WrapString(const char* string, bool draw) {
             	tempString[lineDrawEnd] = '\0';
                 if (draw) {
                 	PrintLine(tempString);
+                }
+                if (drawFunc) {
+                	drawFunc(tempString);
                 }
 
             	lastPenX = penX;
@@ -360,6 +402,10 @@ int Text::WrapString(const char* string, bool draw) {
             wordCount = 0;
             tempIndex = 0;
 
+            //Prefix line with colorPrefix
+            strcpy(tempString+tempIndex, colorPrefix);
+            tempIndex = strlen(colorPrefix);
+
             if (oldLineDrawEnd == 0) { //Can't even fit a single char two times in a row, time to quit
     			if (panic) {
     				break;
@@ -376,6 +422,7 @@ int Text::WrapString(const char* string, bool draw) {
         }
     }
 
+	color = lastColor;
 	penX = lastPenX;
 	penY = lastPenY;
 
@@ -383,8 +430,8 @@ int Text::WrapString(const char* string, bool draw) {
 	return lineBreaksL;
 }
 
-u8 Text::PrintString(const char* str) {
-    return (u8)WrapString(str, true);
+u8 Text::PrintString(const char* str, void(*drawFunc)(const char*)) {
+    return (u8)WrapString(str, drawFunc == NULL, drawFunc);
 }
 void Text::PrintNewline() {
     penX = marginLeft;

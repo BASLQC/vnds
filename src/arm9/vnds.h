@@ -15,10 +15,6 @@ class VNDS {
 		Archive* soundArchive;
 		Archive* scriptArchive;
 
-        char nvlpath[MAXPATHLEN];
-        char nvltitle[128];
-        NovelType noveltype;
-
 		bool quit;
 		bool waitForInput;
 		int  delay;
@@ -47,8 +43,6 @@ class VNDS {
 
 		bool IsWaitingForInput();
 		int  GetDelay();
-        NovelType GetNovelType();
-        const char* GetTitle();
 
 		void SetDelay(int d);
 		void SetWaitForInput(bool b);
