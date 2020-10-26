@@ -1,6 +1,6 @@
 export SHORTNAME	:= VNDS
 export LONGNAME 	:= Visual Novel Reader
-export VERSION 		:= 1.5.2
+export VERSION 		:= 1.5.3
 ICON 		:= -b logo.bmp
 EFS			:= $(CURDIR)/tools/efs/efs
 

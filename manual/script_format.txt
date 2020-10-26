@@ -52,20 +52,21 @@ setvar/gsetvar:
         for things like cleared path flags
     prefix a variable with $ to use it in other commands: `text var is $var`
         {$var} can be used if needed to separate the variable from other text
+    strings need to have ""s around them: `setvar asdf = "qwerty"`
         
 if/fi:
     usage: 
         if x == 1
             commands
         fi
+        if y == "asdf"
+            something else
+        fi
     conditional jump
     
     if true, it keeps reading. if false, it skips till it encounters a fi
-    Note: left operand must be a variable, right may be either
-        This is due to either redoing every script to put $ in front of the
-            variables, or just making left not default to string if the
-            variable doesnt exist.
-    
+    it is possible to nest if/fi blocks
+        
 jump:
     usage: jump file.scr [label]
     looks in script/ for the .scr and starts reading off that.

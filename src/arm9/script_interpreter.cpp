@@ -251,21 +251,12 @@ void ScriptInterpreter::ReplaceVars(char* out, const char* text) {
 }
 
 bool ScriptInterpreter::EvaluateIf(const char* expr1, const char* op, const char* expr2) {
-    bool exist = false;
 	Variable v1(expr1);
 	if (vnds->variables.count(expr1) > 0)  {
 		v1 = vnds->variables[expr1];
-        exist = true;
 	} else if (vnds->globals.count(expr1) > 0) {
 		v1 = vnds->globals[expr1];
-        exist = true;
 	}
-    
-    if (!exist) {
-        v1.type = VT_int;
-        v1.intval = 0;
-        v1.strval[0] = '\0';
-    }
 
 	Variable v2(expr2);
 	if (vnds->variables.count(expr2) > 0)  {

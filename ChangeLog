@@ -1,3 +1,9 @@
+* 1.5.3 22/06/09
+    Jake:
+        * fixed bug with undefined variables in conditionals
+        * string variables need to be ""`d (setvar/if)
+        * wifi doesnt hang forever if it can't connect
+
 * 1.5.2 03/06/09
     Jake:
         * fixed problems with music with too high a bitrate

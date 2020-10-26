@@ -26,16 +26,16 @@ VNDownload::VNDownload()
     Wifi_EnableWifi(); 
     Wifi_AutoConnect();
     
-    while(wifiStatus != ASSOCSTATUS_ASSOCIATED) {
+    while(wifiStatus != ASSOCSTATUS_ASSOCIATED && ASSOCSTATUS_CANNOTCONNECT != wifiStatus) {
         wifiStatus = Wifi_AssocStatus();
     }
-    if (wifiStatus != ASSOCSTATUS_CANNOTCONNECT)
-        printf("connected!\n\n");
-    else {
+    if (wifiStatus == ASSOCSTATUS_CANNOTCONNECT) {
         printf("failed!\n\n");
         running = false;
         waitForAnyKey();
+        return;
     }
+    printf("connected!\n\n");
     
     printf("getting file list...\n");
     GetList();

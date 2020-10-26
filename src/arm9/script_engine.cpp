@@ -18,24 +18,23 @@ Variable::Variable(const char* value) {
     intval = 0;
     strval[0] = '\0';
 
-	if (value) {
-		type = VT_int;
-		for (const char* c = value; *c != '\0'; c++) {
-			if (!isdigit(*c) || (*c == '-' && (c != value || c[1] == '\0'))) {
-				//Block non-digits, block '-' if it's not the first char -or- the only char
-				//In short: value is not of the form /(-)?[0-9]*/
-				type = VT_string;
-				break;
-			}
-		}
-
-		if (type == VT_int) {
-			intval = atoi(value);
+	if (value && value[0] != '\0') {
+        if (value[0] == '"' && value[strlen(value)-1] == '"') {
+            strncpy(strval, value+1, strlen(value)-2);
+			strval[strlen(value)-2] = '\0';
+            type = VT_string;
+        }
+        else if (isdigit(value[0]) || value[0] == '-') {
+            intval = atoi(value);
 			sprintf(strval, "%d", intval); //Gets rid prefixed zeroes
-		} else {
-			strncpy(strval, value, VAR_STRING_LENGTH-1);
-			strval[VAR_STRING_LENGTH-1] = '\0';
-		}
+            type = VT_int;
+        }
+        else {
+            type = VT_int;
+            intval = 0;
+            strval[0] = '0';
+            strval[1] = '\0';
+        }
 	}
 }
 Variable::~Variable() {

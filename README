@@ -1,30 +1,115 @@
+                  _     
+ __   ___ __   __| |___                ---------------------
+ \ \ / / '_ \ / _` / __|               | Date:             |
+  \ V /| | | | (_| \__ \               | 18th of June 2009 |
+   \_/ |_| |_|\__,_|___/               ---------------------
+   by Jake Probst, anoNL
+   
+------------------------------------------------------------
+# Additional documentation is available in the manual folder
+------------------------------------------------------------
 
-Additional documentation is available in the manual folder
+________                                            ________
+# Index \__________________________________________/ [INDX0]
+------------------------------------------------------------
 
-Installation:
-    Extract the .tar.gz onto the root of the SD card so the path is 
-    /vnds/. To install a visual novel, extract the tar.gz in /vnds/novels, so
-    it has its own folder (ie. /vnds/novels/tsukihime). Sound files should
-    end up in /vnds/novels/<game folder>/sound/.
-    Alternatively, take the .novel file and place it in the /vnds/novel/ folder.
+  » Installation ....................................[ISNT0]
+    1] The application ..............................[ISNT1]
+    2] Novels .......................................[ISNT2]
+  » NOTICE ..........................................[NOTE0]
+    1] Save files ...................................[NOTE1]
+    2] Installation of novels .......................[NOTE2]
+  » Running .........................................[RUNN0]
+  » Troubleshooting .................................[TRBL0]
+  » Contact .........................................[CNTC0]
+  » Credits .........................................[CRDT0]
+  
+_______________                                     ________
+# Installation \___________________________________/ [ISNT0]
+------------------------------------------------------------
 
-NOTICE:
-    * any save prior to version 1.3.1 needs to be ran though the sav2xml.py
-        utility in the tools/ folder. requires python(http://python.org) to run
-    * alternatively: http://digital-haze.net/files/vnds/fixsave.php
+ 1] [INsT1] The application
 
-Running:
-    Should be easy enough
+  » Download the latest build of vnds (currently: 1.5.3) 
+    from http://digital-haze.net/vnds.php.
+  » Extract the .tar.gz onto the root of your NDS homebrew 
+    device so the path is /vnds/.
 
-Troubleshooting:
-    * Make sure the path is correct
-    * If you run it and you get stuck at a white screen, launch it with an
-        alternative launcher, such as dsorganize or dschannels.
+------------------------------------------------------------
 
-Contact:
-    forum: http://digital-haze.net/ch/vnds
-    IRC:   irc.rizon.net #vnds
+ 2] [ISNT2] Novels
+    
+  » To install a visual novel, download the .novel file of
+    the novel from http://digital-haze.net/vnds.php. 
+    If you want sound, make sure to download the files with
+    '-sound' in the filename. Those are found in the 
+    '+Sound' link next to the novel title.
+  » Place the .novel file as is in the /vnds/novels/ folder.
+  
+_________                                           ________
+# NOTICE \_________________________________________/ [NOTE0]
+------------------------------------------------------------
 
-Credits:
-    Programming: Jake Probst, anoNL
+ 1] [NOTE1] Save files
+ 
+  » Any save prior to version 1.3.1 needs to be ran through
+    the sav2xml.py utility in the /vnds/tools/ folder.
+  » Alternatively, use this webpage:
+    http://digital-haze.net/files/vnds/fixsave.php
+    
+ 2] [NOTE2] Installation of novels
+ 
+  » Since the installation process has changed since earlier
+    versions of vnds sound files are now included in .novel
+    files where '-sound' is part of the filename.
+    You shouldn't need any subfolders in the /vnds/novels/
+    folder, what so ever. Don't listen to the old README. :o
+    
+__________                                          ________
+# Running \________________________________________/ [RUNN0]
+------------------------------------------------------------
 
+  » After installation plug your NDS homebrew device into 
+    your Nintendo DS and power on.
+  » Browse to /vnds/ and execute vnds.nds.
+  
+  » Shouldn't be a problem.
+  
+__________________                                  ________
+# Troubleshooting \________________________________/ [TRBL0]
+------------------------------------------------------------
+
+  » Make sure the path is correct.
+    
+      root:/vnds/manual/
+                /novels/
+                /skins/
+                /src/
+                /tools/
+                /vnds.nds
+                /README
+                ...
+                
+  » Make sure novels are placed directly into the /novels/
+    folder
+    
+      root:/vnds/novels/<novel name>.novel
+      
+  » If you run vnds.nds and you get stuck at a white screen,
+    launch it with an alternative launcher, such as 
+    DSorganize or DSchannels.
+    
+__________                                          ________
+# Contact \________________________________________/ [CNTC0]
+------------------------------------------------------------
+
+  » Forum:  http://digital-haze.net/ch/vnds
+  » IRC:    #vnds@irc.rizon.net
+  
+__________                                          ________
+# Credits \________________________________________/ [CRDT0]
+------------------------------------------------------------
+
+  » Programming: Jake Probst, anoNL
+  » This README: LightningEagle
+ 
