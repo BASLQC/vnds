@@ -1,0 +1,12 @@
+#ifndef FIFO_H
+#define FIFO_H
+
+#include <nds.h>
+
+#define MSG_TOGGLE_BACKLIGHT 7600
+#define MSG_INIT_SOUND_ARM7  7601
+
+#define TCOMMON_FIFO_CHANNEL_ARM7 FIFO_USER_07
+#define TCOMMON_FIFO_CHANNEL_ARM9 FIFO_USER_08
+
+#endif

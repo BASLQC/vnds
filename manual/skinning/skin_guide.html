@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>VNDS Manual - Skinning Guide</title>
+    <link id="main_style" rel="stylesheet" type="text/css" href="default.css"/>
+    <style>
+img {
+    border: 3px solid black;
+}
+.tick {
+    background-color: #E0E0E0;
+    padding: 10px;
+}
+.tock {
+    background-color: #F0F0F0;
+    padding: 10px;
+}
+    </style>
+  </head>
+  <body>
+    <div>
+      <h3>Skinning Guide</h3>
+
+      <p>Normal skins are stored in /vnds/skins/&lt;skinname&gt;/ and novel-specific skins are stored in a subfolder "skin" of the novel folder.<br/>If an image or font is not available in the novel-skin folder, the version from the regular skin is used.<br/>Images can be in either PNG format or raw bitmap format (extension should be .dta), if both types are present, the PNG version is used. Raw bitmaps load faster than PNG compressed images, but their filesize is much larger. An image converter that can convert to the raw bitmap format is included: "tools/ImageConverter.jar".</p>
+
+      <div class="tick">
+        <h4>about_bg (about screen background)</h4>
+        <img src="about_bg.png" alt=""/>
+      </div>
+
+      <div class="tock">
+        <h4>ingame_tex (ingame buttons)</h4>
+        <img src="ingame_tex.png" alt=""/>
+
+        <br/>
+        <br/>
+        Named images:
+        <ul>
+          <li>A: Arrow that marks the selection option on the choice screen</li>
+          <li>B: Icon that's shown when the program is waiting for a keypress from the user</li>
+          <li>C: 4 image animation that's shown when the program is waiting due to a delay command. The images are all 16x16 pixels and shown in the sequence: top-left, top-right, bottom-left, bottom-right. After all images are shown, the animation starts at the first frame again, but mirrors the images both horizontally and vertically resulting in an 8-frame animation.</li>
+          <li>D: Left arrow & left arrow pressed images used by the spinners on the preferences menu.</li>
+          <li>E: Right arrow & right arrow pressed images used by the spinners on the preferences menu.</li>
+          <li>F: The program uses this area to store the date/time image that it draws.</li>
+          <li>G: The image that's used for the bottom bar in the regular view, gets stretched to 256x16.</li>
+          <li>H: Similar to G, but used for the menu screens' bottom bar.</li>
+          <li>I: Left & right scrollbar track images.</li>
+          <li>J: Left & right scrollbar thumb images.</li>
+        </ul>
+
+        <p>The small buttons on the top are from left to right: save, load, menu, brightness0, brightness1, brightness2, brightness3, sound_off, sound_on, repeat_sound.</p>
+      </div>
+
+      <div class="tick">
+        <h4>loading_bg (novel loading background)</h4>
+        <img src="loading_bg.png" alt=""/>
+      </div>
+
+      <div class="tock">
+        <h4>menu_bg (background for ingame menu's)</h4>
+        <img src="menu_bg.png" alt=""/>
+      </div>
+
+      <div class="tick">
+        <h4>savemenu_tex (special savemenu images)</h4>
+        <img src="savemenu_tex.png" alt=""/>
+      </div>
+
+      <div class="tock">
+        <h4>select_bg (vn select screen background)</h4>
+        <img src="select_bg.png" alt=""/>
+      </div>
+
+      <div class="tick">
+        <h4>select_tex (vn select screen buttons)</h4>
+        <img src="select_tex.png" alt=""/>
+      </div>
+
+      <div class="tock">
+        <h4>skipload_bg (loading screen for R+Y: quickread)</h4>
+        <img src="skipload_bg.png" alt=""/>
+      </div>
+
+    </div>
+  </body>
+</html>

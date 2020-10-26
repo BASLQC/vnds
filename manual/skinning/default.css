@@ -1,0 +1,23 @@
+body {
+    font-size: 10pt;
+    font-family: tahoma, arial;
+    text-align: left;
+}
+th, td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+th {
+    height: 23px;
+}
+hr {
+    border-style: solid;
+    border-color: #999999;
+}
+em {
+    font-family: "courier new", "courier", "monospace";
+    font-style: normal;
+}
+img {
+    border-color: black;
+}

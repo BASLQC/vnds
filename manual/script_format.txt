@@ -1,0 +1,116 @@
+VNDS .scr file format:
+
+for any clarification on the usage of these, look at a .scr from another VN
+
+bgload:
+    usage: bgload file
+    looks in background/ for the image and draws it as the background
+    
+setimg:
+    usage: setimg file x y
+    looks in foreground/ for the image and draws it at the point (x,y)
+
+sound:
+    usage: sound file times
+    looks in sound/ for the file, loads it into memory(don`t do this with 
+        anything over a meg in size) and plays it X times. -1 for infinite
+        looping.
+    sound is expected to be in 22050Hz 1 channel raw imadpcm format.
+    if file is ~, it stops any currently playing sound.
+    
+music:
+    usage: music file
+    looks in sound/ for the file, 
+    
+    music is expected to be in mp3 format
+    if file is ~, it stops the music.
+
+text:
+    usage: text string
+    displays text to the screen.
+    
+    Prepending string with @ makes it not require clicking to advance
+    if string is ~, it`ll make a blank line
+    if string is !, it`ll make a blank line and require clicking to advance
+    use $varname to output a variable
+    
+choice:
+    usage: choice option1|option2|etc...
+    displays choices on the screen
+    
+    when a choice is clicked, selected is set to the value of what was
+        selected, starting at 1.
+    use if selected == 1, etc to go off what was selected.
+
+setvar/gsetvar:
+    usage: setvar modifier value
+    sets a variable
+    
+    modifier: =, +. -
+    setvar puts values into local save memory, to be kept in normal save files
+        for things like character flags and such
+    gsetvar sets variables in global.sav
+        for things like cleared path flags
+        
+if/fi:
+    usage: 
+        if x == 1
+            commands
+        fi
+    conditional jump
+    
+    if true, it keeps reading. if false, it skips till it encounters a fi
+    Note: left operand must be a variable, right may be either
+        This is due to either redoing every script to put $ in front of the
+            variables, or just making left not default to string if the
+            variable doesnt exist.
+    
+jump:
+    usage: jump file.scr
+    looks in script/ for the .scr and starts reading off that.
+
+delay:
+    usage: delay X
+    X being number of frames to hold, DS runs at 60 frames per second.
+
+random:
+    usage: random var low high
+    set var to a number between low and high (inclusive)
+
+label/goto:
+    usage:
+        label name
+        goto name
+    
+    a goto command will search the text file for a label with the same name and
+        start the script from that part
+
+Notes:
+    titlescreen:
+        icon: 32x32 .png
+        thumbnail 100x75 .png
+        
+    To place a variable in a command, prefix the variable name with $ and it
+        will directly replace it. Strings only
+
+Conversion:
+    Images:
+        Sprites should be in png format and backgrounds as jpg or png. Alpha 
+            transparency is supported for sprites. 
+        To avoid color banding, decrease the color depth of the images to 
+            5bits/pixel and use dithering (png doesn't support 5bits/pixel, so
+            store them in 8bits/pixel instead).
+        For background images you should also make sure that they're 256x192 
+            in size.
+
+    Sound:
+        Sound effects should be encoded in <MS IMA-ADPCM mono 22050Hz>.
+
+        Example using sox:    sox.exe infile -r 22050 -i -1 -c 1 outfile.wav
+        Example using ffmpeg: ffmpeg -i infile -ar 22050 -acodec adpcm_ima_wav -ac 1 outfile.wav
+
+        After converting you have to remove the headers from the file:
+
+        Example using ima2raw: ima2raw.exe outfile.wav
+
+        source code and ima2raw.exe are included in the tools folder.
