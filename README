@@ -1,3 +1,14 @@
+NOTE: This repo is solely an archive of the final version 1.4.9 by anonNL made in 2011, in the aim of defining the least common denominator for a working implementation. https://web.archive.org/web/20111207074836/http://digital-haze.net/files/vnds/vnds/vnds-1.4.9.tar.gz
+
+A maintained version for Nintendo DS can be found below:
+
+https://github.com/ds-homebrew/vnds
+
+Note that anonNL indicates that jake's contributions starting with 1.5.0 (lost) are a separate branch based on 1.4.7 (lost)
+so these commits are actually older and precede the true latest version 1.4.9 which merges changes from jake's 1.5.3 and 
+provides newer patches, confusingly. (as shown by the crossed out links and the 1.4.9 ChangeLog) https://web.archive.org/web/20140218222855/digital-haze.net/projects/vnds.html
+
+---
 
 Additional documentation is available in the manual folder
 
